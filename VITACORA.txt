@@ -243,3 +243,42 @@ La página debe mostrar: esquema 1.0.0, 4 ítems demo, 4 categorías.
 ================================================================================
 FIN ENTRADA #005
 ================================================================================
+
+================================================================================
+ENTRADA #006
+================================================================================
+Fecha: 2026-05-29
+Responsable: Usuario + Agente Cursor
+Acción: ESQUEMA SUPABASE APLICADO CON ÉXITO
+
+EVIDENCIA
+---------
+Usuario ejecutó APPLY_IN_DASHBOARD.sql en SQL Editor.
+Resultado final de verificación:
+  key = project
+  schema_version = 1.0.0
+
+INTERPRETACIÓN
+--------------
+- Tablas creadas en schema public.
+- Datos semilla cargados (categorías, almacén ALM-01, 4 ítems demo, correlativo RET-2026).
+- Bucket storage "receipts" registrado.
+- RLS y políticas de lectura anon para diagnóstico activas.
+
+ACTUALIZACIÓN CÓDIGO
+--------------------
+- project-status: módulo supabase-schema → done; inventario → in_progress.
+- Versión app: 0.2.0
+
+PRUEBA DESDE OTRO DISPOSITIVO
+-----------------------------
+Recargar https://rugdraiger.github.io/aserradero-mestre-inventario/
+Debe mostrar: Supabase OK, esquema 1.0.0, 4 ítems, 4 categorías.
+
+SIGUIENTE FASE
+--------------
+Pantalla lista de inventario en la web + login supervisor (Supabase Auth).
+
+================================================================================
+FIN ENTRADA #006
+================================================================================

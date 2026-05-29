@@ -33,7 +33,14 @@ export const PROJECT_MODULES: ProjectModule[] = [
   {
     id: "supabase-schema",
     name: "Esquema Supabase",
-    description: "SQL listo en APPLY_IN_DASHBOARD.sql — ejecutar en SQL Editor.",
+    description: "Esquema v1.0.0 aplicado en SQL Editor (tablas, RLS, datos demo).",
+    status: "done",
+    updatedAt: "2026-05-29",
+  },
+  {
+    id: "inventory",
+    name: "Catálogo e inventario",
+    description: "Ítems, almacenes, stock en tiempo real.",
     status: "in_progress",
     updatedAt: "2026-05-29",
   },
@@ -41,13 +48,6 @@ export const PROJECT_MODULES: ProjectModule[] = [
     id: "auth",
     name: "Auth supervisores",
     description: "Supabase Auth para rol inventario supervisor.",
-    status: "pending",
-    updatedAt: "2026-05-29",
-  },
-  {
-    id: "inventory",
-    name: "Catálogo e inventario",
-    description: "Ítems, almacenes, stock en tiempo real.",
     status: "pending",
     updatedAt: "2026-05-29",
   },
@@ -74,4 +74,4 @@ export const PROJECT_MODULES: ProjectModule[] = [
   },
 ];
 
-export const PROJECT_VERSION = "0.1.0";
+export const PROJECT_VERSION = "0.2.0";
