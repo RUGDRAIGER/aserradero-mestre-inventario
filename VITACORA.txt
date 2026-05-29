@@ -315,3 +315,29 @@ PENDIENTE SIGUIENTE FASE
 ================================================================================
 FIN ENTRADA #007
 ================================================================================
+
+================================================================================
+ENTRADA #008
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor + Usuario
+Acción: CONFIGURACIÓN CONTROL AUTOMÁTICO SUPABASE
+
+SECRETS GITHUB (Actions)
+------------------------
+- SUPABASE_DB_PASSWORD: configurado vía gh secret (no guardado en archivos del repo).
+- NEXT_PUBLIC_SUPABASE_ANON_KEY: ya existía.
+- SUPABASE_ACCESS_TOKEN: PENDIENTE (usuario debe crearlo en Account → Access Tokens).
+
+WORKFLOW NUEVO
+--------------
+- .github/workflows/supabase-migrations.yml → supabase db push en cambios a supabase/migrations/
+
+SEGURIDAD
+---------
+- Usuario compartió clave de base en chat; se recomienda rotar contraseña en Supabase Database settings.
+- Documentación: docs/CONTROL_SUPABASE.md
+
+================================================================================
+FIN ENTRADA #008
+================================================================================
