@@ -107,3 +107,69 @@ SEGURIDAD
 ================================================================================
 FIN ENTRADA #002 — Líneas totales aproximadas en este archivo: < 120
 ================================================================================
+
+================================================================================
+ENTRADA #003
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: REPOSITORIO, PÁGINA DE AVANCE Y DOCUMENTACIÓN SUPABASE
+
+ARCHIVOS CREADOS
+----------------
+- VITACORA.txt (este archivo)
+- docs/SUPABASE_PASOS.md — checklist para el usuario
+- README.md
+- package.json, next.config.ts, tsconfig.json
+- src/app/page.tsx — página principal de avance del proyecto
+- src/components/SupabaseStatus.tsx — prueba de conexión Supabase en cliente
+- src/lib/supabase.ts, src/lib/project-status.ts
+- supabase/migrations/20260529000000_placeholder.sql
+- .github/workflows/deploy-pages.yml — build estático + GitHub Pages
+- .env.example, .gitignore
+
+REPOSITORIO GITHUB
+------------------
+- Organización/usuario: RUGDRAIGER
+- Nombre del repo: aserradero-mestre-inventario
+- URL: https://github.com/RUGDRAIGER/aserradero-mestre-inventario
+- Rama principal: main
+- Commit inicial: "Inicio del proyecto: bitácora, página de avance y base Supabase."
+- Autenticación: CLI `gh` ya logueada en la máquina del usuario (no se guardó token en el repo).
+
+PÁGINA DE AVANCE (GITHUB PAGES)
+-------------------------------
+- URL prevista: https://rugdraiger.github.io/aserradero-mestre-inventario/
+- Workflow: Deploy GitHub Pages en push a main
+- Requiere en GitHub → Settings → Secrets:
+  NEXT_PUBLIC_SUPABASE_URL
+  NEXT_PUBLIC_SUPABASE_ANON_KEY
+- Requiere en GitHub → Settings → Pages: origen "GitHub Actions"
+- Build local verificado: npm run build OK (export estático en /out)
+
+NOTA SOBRE TOKEN GITHUB DEL USUARIO
+----------------------------------
+El usuario ofreció enviar un token; no fue necesario pegarlo en archivos porque `gh` ya estaba autenticado. Si en otra máquina necesita conectar: `gh auth login` o remote HTTPS con PAT en credential manager (nunca commitear el PAT).
+
+SUPABASE — ESTADO
+-----------------
+- URL del proyecto configurada en .env.example
+- Cliente JS preparado; conexión en página mostrará advertencia hasta que exista .env.local o Secrets en Actions
+- Migración real de tablas: PENDIENTE hasta recibir anon key y confirmación de esquema
+
+PRÓXIMA ACCIÓN DEL USUARIO
+--------------------------
+1. Crear .env.local con anon key (ver docs/SUPABASE_PASOS.md)
+2. Añadir los mismos valores como Secrets en GitHub para que Pages muestre "Conexión OK"
+3. Ejecutar SQL de listado de tablas y responder si la base está vacía
+4. (Opcional) Enviar modelo de lector biométrico
+
+PRÓXIMA ACCIÓN DEL AGENTE (TRAS DATOS SUPABASE)
+-----------------------------------------------
+- Crear migración 20260529100000_initial_schema.sql
+- Actualizar módulos en project-status.ts y VITACORA entrada #004
+- Probar health extendido (consulta a tabla de prueba)
+
+================================================================================
+FIN ENTRADA #003 — Líneas totales aproximadas en este archivo: < 220
+================================================================================
