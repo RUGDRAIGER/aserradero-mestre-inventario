@@ -206,3 +206,40 @@ MANIPULACIÓN DE SUPABASE SIN PC LOCAL
 ================================================================================
 FIN ENTRADA #004
 ================================================================================
+
+================================================================================
+ENTRADA #005
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: CONFIRMACIÓN BASE VACÍA + ESQUEMA SQL + DIAGNÓSTICO PÁGINA
+
+HALLAZGO USUARIO
+----------------
+- SQL de tablas en public: "Success. No rows returned" → esquema public sin tablas (OK).
+
+REVISIÓN CONFIGURACIÓN GITHUB
+-----------------------------
+- Secret NEXT_PUBLIC_SUPABASE_ANON_KEY: CONFIGURADO (2026-05-29).
+- Último workflow Deploy GitHub Pages: success.
+- URL Pages: https://rugdraiger.github.io/aserradero-mestre-inventario/
+- URL Supabase fija en workflow (no requiere secret adicional).
+
+ARCHIVOS NUEVOS / ACTUALIZADOS
+------------------------------
+- supabase/APPLY_IN_DASHBOARD.sql — esquema completo v1.0.0 (tablas, RLS, seed, bucket receipts, realtime).
+- src/lib/supabase.ts — health check: API + system_settings + conteos.
+- src/components/SupabaseStatus.tsx — instrucciones si falta aplicar SQL.
+- project-status: repo y demo-page = done; supabase-schema = in_progress.
+
+PENDIENTE USUARIO (1 SOLO PASO EN SUPABASE)
+--------------------------------------------
+Ejecutar APPLY_IN_DASHBOARD.sql en SQL Editor (copiar desde repo GitHub).
+
+TRAS EJECUTAR SQL
+-----------------
+La página debe mostrar: esquema 1.0.0, 4 ítems demo, 4 categorías.
+
+================================================================================
+FIN ENTRADA #005
+================================================================================

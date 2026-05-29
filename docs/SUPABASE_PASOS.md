@@ -64,7 +64,14 @@ ORDER BY table_name;
 4. Copia el resultado (tabla de la derecha) y pégalo en el chat.
 5. Si no sale ninguna fila (o solo cosas que no creaste tú), escribe: **“Base vacía”**.
 
-Con eso preparo el SQL de tablas (inventario, movimientos, biometría, etc.) para que lo ejecutes en el mismo SQL Editor.
+Si el resultado fue **“No rows returned”** → base vacía (correcto).
+
+**Siguiente paso obligatorio:** ejecutar el esquema:
+
+1. Abre en GitHub el archivo `supabase/APPLY_IN_DASHBOARD.sql` (botón **Raw** → copiar todo).
+2. Supabase → **SQL Editor** → New query → pegar → **Run**.
+3. Debe terminar en éxito y mostrar una fila `project` / `schema_version` `1.0.0`.
+4. Recarga la página de GitHub Pages; debe indicar esquema activo e ítems de demostración.
 
 ---
 

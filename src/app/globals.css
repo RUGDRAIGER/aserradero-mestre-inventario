@@ -171,6 +171,19 @@ section h2 {
   color: var(--muted);
 }
 
+.health-details {
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.hint {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--warn);
+}
+
 .links {
   list-style: none;
   padding: 0;
