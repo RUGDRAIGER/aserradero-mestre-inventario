@@ -173,3 +173,36 @@ PRÓXIMA ACCIÓN DEL AGENTE (TRAS DATOS SUPABASE)
 ================================================================================
 FIN ENTRADA #003 — Líneas totales aproximadas en este archivo: < 220
 ================================================================================
+
+================================================================================
+ENTRADA #004
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: MODO SOLO GITHUB PAGES (SIN ENTORNO LOCAL)
+
+DECISIÓN DEL USUARIO
+--------------------
+- No trabajarán con entorno local en PC.
+- Pruebas desde otro dispositivo vía URL de GitHub Pages.
+- Necesita instrucciones claras de qué sacar de Supabase y cómo entregarlo.
+
+CAMBIOS REALIZADOS
+------------------
+1. docs/SUPABASE_PASOS.md reescrito: solo GitHub Secret + SQL en panel + prueba en móvil.
+2. .github/workflows/deploy-pages.yml: URL Supabase fija en workflow; solo secret anon key.
+3. README.md: eliminada sección de desarrollo local como flujo principal.
+
+ENTREGABLES QUE ESPERA EL AGENTE DEL USUARIO
+--------------------------------------------
+A) Secret NEXT_PUBLIC_SUPABASE_ANON_KEY en GitHub (o anon key en chat).
+B) Resultado SQL de tablas public o texto "Base vacía".
+
+MANIPULACIÓN DE SUPABASE SIN PC LOCAL
+-------------------------------------
+- Migraciones: usuario ejecuta SQL en Supabase SQL Editor desde navegador.
+- App: build en GitHub Actions con variable embebida en el sitio estático.
+
+================================================================================
+FIN ENTRADA #004
+================================================================================

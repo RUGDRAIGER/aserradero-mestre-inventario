@@ -10,30 +10,19 @@ Sistema web de inventario (EPP y materiales) con validación biométrica, compro
 | Página de avance (GitHub Pages) | https://rugdraiger.github.io/aserradero-mestre-inventario/ |
 | Bitácora | `VITACORA.txt` en la raíz |
 
-## Desarrollo local
+## Probar el proyecto (sin entorno local)
 
-```bash
-cp .env.example .env.local
-# Editar .env.local con tu NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-npm install
-npm run dev
-```
-
-Abre http://localhost:3000
+1. Configura en GitHub **un solo secret**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` (cómo sacarlo: **[docs/SUPABASE_PASOS.md](docs/SUPABASE_PASOS.md)**).
+2. Espera el workflow **Deploy GitHub Pages** en verde.
+3. Abre desde cualquier dispositivo: https://rugdraiger.github.io/aserradero-mestre-inventario/
 
 ## Supabase
 
-Checklist para configurar credenciales y datos: **[docs/SUPABASE_PASOS.md](docs/SUPABASE_PASOS.md)**
+Guía paso a paso (qué sacar del panel y cómo entregarlo): **[docs/SUPABASE_PASOS.md](docs/SUPABASE_PASOS.md)**
 
 ## Despliegue
 
-Push a `main` dispara GitHub Actions y publica en Pages. Configura en el repo **Settings → Secrets**:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-Y en **Settings → Pages → Build and deployment**: origen **GitHub Actions**.
+Cada push a `main` publica en Pages. **Settings → Pages**: origen **GitHub Actions**.
 
 ## Estructura
 

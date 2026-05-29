@@ -1,31 +1,58 @@
-# Qué necesitas entregar desde Supabase
+# Supabase — qué entregar (solo GitHub Pages, sin PC local)
 
-Proyecto: **Aserradero Mestre — Inventario + Biometría**  
-URL del proyecto: `https://qshvtyzedbghgsbpzzcn.supabase.co`
+Proyecto Supabase: **qshvtyzedbghgsbpzzcn**  
+URL fija (ya está en el código): `https://qshvtyzedbghgsbpzzcn.supabase.co`  
+Página de pruebas: https://rugdraiger.github.io/aserradero-mestre-inventario/
 
----
-
-## Paso 1 — Claves API (obligatorio para la app y la página de avance)
-
-1. Entra a [Supabase Dashboard](https://supabase.com/dashboard).
-2. Abre el proyecto `qshvtyzedbghgsbpzzcn`.
-3. Ve a **Project Settings → API**.
-4. Copia y guarda en un archivo local `.env.local` (nunca lo subas a GitHub):
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://qshvtyzedbghgsbpzzcn.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....(tu anon key)
-```
-
-5. **Opcional solo para migraciones desde tu PC o CI** (no va en el frontend):
-   - `service_role` key → solo en servidor / Supabase CLI / GitHub Secrets.
-   - O enlace del proyecto con Supabase CLI: `supabase link --project-ref qshvtyzedbghgsbpzzcn`
+**No usamos `.env.local` en tu computadora.** Todo se prueba desde otro celular/tablet/PC abriendo la URL de GitHub Pages.
 
 ---
 
-## Paso 2 — Estado actual de la base de datos
+## LO QUE NECESITO AHORA (obligatorio)
 
-En **SQL Editor**, ejecuta y pégame el resultado (o captura):
+### 1) Anon Key → GitHub Secret
+
+| Dato | Para qué |
+|------|----------|
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Que la página en GitHub Pages se conecte a Supabase |
+
+**Cómo sacarlo en Supabase**
+
+1. Entra a https://supabase.com/dashboard e inicia sesión.
+2. Abre el proyecto (el que termina en `qshvtyzedbghgsbpzzcn`).
+3. Menú izquierdo abajo: **Project Settings** (engranaje).
+4. En el submenú: **API**.
+5. Busca la sección **Project API keys**.
+6. En la fila **`anon` `public`** pulsa **Copy** (icono copiar).
+   - Es un texto largo que empieza por `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+7. **No copies** la key `service_role` (es secreta de servidor).
+
+**Cómo entregarlo (elige UNA opción)**
+
+**Opción A — Recomendada (más segura):** tú mismo en GitHub
+
+1. Abre https://github.com/RUGDRAIGER/aserradero-mestre-inventario/settings/secrets/actions
+2. **New repository secret**
+3. Name: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Value: pega la anon key → **Add secret**
+5. Ve a **Actions** → workflow **Deploy GitHub Pages** → **Run workflow** (o espera el siguiente push).
+6. Escríbeme: *“Secret anon key configurado”*.
+
+**Opción B:** pégame aquí en el chat solo la **anon key** (es la clave pública del frontend; aun así, la opción A es mejor).
+
+La URL del proyecto **no** hace falta como secret: ya va fija en el workflow de GitHub.
+
+---
+
+### 2) Listado de tablas → mensaje en el chat
+
+Necesito saber si la base está vacía o ya tiene tablas.
+
+**Cómo sacarlo en Supabase**
+
+1. Menú izquierdo: **SQL Editor**.
+2. **New query**.
+3. Pega y ejecuta (botón **Run**):
 
 ```sql
 SELECT table_name
@@ -34,90 +61,65 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 ```
 
-Indica una de estas opciones:
+4. Copia el resultado (tabla de la derecha) y pégalo en el chat.
+5. Si no sale ninguna fila (o solo cosas que no creaste tú), escribe: **“Base vacía”**.
 
-- [ ] **A)** La base está vacía (solo tablas del sistema o ninguna tabla de negocio).
-- [ ] **B)** Ya hay tablas — adjunto listado / export SQL.
-
-Si ya creaste tablas manualmente, exporta también:
-
-```sql
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_schema = 'public'
-ORDER BY table_name, ordinal_position;
-```
+Con eso preparo el SQL de tablas (inventario, movimientos, biometría, etc.) para que lo ejecutes en el mismo SQL Editor.
 
 ---
 
-## Paso 3 — Storage (para PDFs de comprobantes)
+## LO QUE NECESITO DESPUÉS (no bloquea la primera prueba)
 
-1. **Storage → New bucket**
-   - Nombre sugerido: `receipts`
-   - **Private** (no público).
-2. Confirma si quieres otro bucket para adjuntos (`attachments`).
-3. No hace falta que pegues la service key; el agente definirá políticas RLS en migraciones.
+### 3) Bucket para PDFs (cuando toque comprobantes)
 
----
+1. Menú **Storage** → **New bucket**.
+2. Name: `receipts`
+3. **Public bucket: OFF** (privado).
+4. Avísame: *“Bucket receipts creado”*.
 
-## Paso 4 — Authentication (supervisores)
+### 4) Usuario supervisor de prueba
 
-1. **Authentication → Providers**: activa **Email** (mínimo).
-2. Crea un usuario de prueba supervisor (email + contraseña) o confirma que usarás invitaciones.
-3. Indica si necesitas **MFA** para supervisores (sí/no).
+1. Menú **Authentication** → **Users** → **Add user** → **Create new user**.
+2. Email + contraseña de prueba.
+3. Escríbeme solo el **email** (no la contraseña en el chat). La contraseña la guardas tú.
 
----
+### 5) Para que yo cree tablas sin tu PC (solo SQL)
 
-## Paso 5 — Realtime (inventario en vivo)
+Cuando envíe archivos en `supabase/migrations/`:
 
-1. **Database → Replication** (o Realtime settings).
-2. Cuando existan tablas `inventory_items` e `inventory_movements`, habilita replicación para el dashboard (lo haremos en migración).
+1. Abres **SQL Editor** en Supabase.
+2. Copias el contenido del archivo `.sql`.
+3. **Run**.
+4. Me confirmas: *“Migración X aplicada”* o pegas el error si falla.
 
----
-
-## Paso 6 — Invitación o CLI (para que el agente “manipule” Supabase)
-
-Elige **una** vía:
-
-| Método | Qué haces tú |
-|--------|----------------|
-| **A. Variables locales** | Creas `.env.local` con anon key; para migraciones añades `SUPABASE_ACCESS_TOKEN` de tu cuenta Supabase (Personal Access Token en supabase.com/dashboard/account/tokens) y ejecutas `npx supabase link` en el proyecto. |
-| **B. SQL manual** | Ejecutas en SQL Editor los archivos que iremos dejando en `supabase/migrations/` y me confirmas “aplicado”. |
-| **C. Colaborador** | Invitas a tu equipo en Supabase (rol Developer) — solo si usas cuenta de organización. |
-
-**No envíes por chat:** `service_role` completa ni contraseñas. Si debes compartir algo, usa solo **anon key** (es pública por diseño en el frontend) o variables en GitHub Secrets.
+**No necesitas** `service_role` en el chat. Las migraciones las aplicas tú en el panel o más adelante en GitHub Secrets si montamos CI de migraciones.
 
 ---
 
-## Paso 7 — GitHub Secrets (para CI y Pages con Supabase)
+## Cómo comprobar desde otro dispositivo
 
-En el repo de GitHub → **Settings → Secrets and variables → Actions**, crea:
+1. Configuras el secret `NEXT_PUBLIC_SUPABASE_ANON_KEY` en GitHub.
+2. Esperas que **Actions** termine en verde (Deploy GitHub Pages).
+3. En el celular/tablet abre:  
+   https://rugdraiger.github.io/aserradero-mestre-inventario/
+4. En la sección **Estado Supabase** debe decir **“Conexión con Supabase OK”**.
 
-| Secret | Valor |
-|--------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://qshvtyzedbghgsbpzzcn.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tu anon key |
-
-Así la **página de avance** en GitHub Pages podrá probar conexión en la nube.
-
----
-
-## Paso 8 — Datos de negocio (cuando empecemos catálogo)
-
-- Lista de categorías (EPP, herramientas, insumos, etc.).
-- Unidades (unidad, par, caja, kg, m³).
-- Nombres de almacenes / puntos de entrega.
-- Umbrales de stock mínimo por categoría o ítem.
-- Zona horaria (ej. `America/Lima`).
-- Formato del correlativo de comprobantes (ej. `MESTRE-2026-0000001`).
+Si dice que faltan variables, el secret no está o el deploy no ha terminado.
 
 ---
 
-## Resumen mínimo para empezar hoy
+## Resumen en 3 líneas
 
-1. `NEXT_PUBLIC_SUPABASE_ANON_KEY` en `.env.local` (y en GitHub Secrets para Pages).
-2. Resultado del SQL de tablas en `public`.
-3. Confirmación: bucket `receipts` creado o “crear cuando digas”.
-4. Usuario supervisor de prueba en Auth.
+| # | Qué | Dónde sacarlo | Cómo me lo das |
+|---|-----|---------------|----------------|
+| 1 | **anon public key** | Settings → API → anon Copy | Secret en GitHub **o** pegado en chat |
+| 2 | **¿Tablas existentes?** | SQL Editor → query de tablas | Pegar resultado o “Base vacía” |
+| 3 | (después) bucket + usuario supervisor | Storage / Authentication | Mensaje corto de confirmación |
 
-Con eso el siguiente paso en VITACORA será: migración inicial SQL + conexión verde en la página de avance.
+---
+
+## Lo que NO debes enviar
+
+- `service_role` key  
+- Contraseña de la base de datos  
+- Contraseñas de usuarios en el chat  
