@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/context/AuthProvider";
+import { NavBar } from "@/components/NavBar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aserradero Mestre — Avance del proyecto",
+  title: "Aserradero Mestre — Inventario",
   description:
-    "Página de seguimiento del sistema de inventario con biometría y comprobantes PDF.",
+    "Sistema de inventario con biometría, comprobantes PDF y panel supervisor.",
 };
 
 export default function RootLayout({
@@ -14,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <NavBar />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

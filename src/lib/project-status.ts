@@ -40,15 +40,15 @@ export const PROJECT_MODULES: ProjectModule[] = [
   {
     id: "inventory",
     name: "Catálogo e inventario",
-    description: "Ítems, almacenes, stock en tiempo real.",
-    status: "in_progress",
+    description: "Listado en /inventario/, estados de stock y reposición.",
+    status: "done",
     updatedAt: "2026-05-29",
   },
   {
     id: "auth",
     name: "Auth supervisores",
-    description: "Supabase Auth para rol inventario supervisor.",
-    status: "pending",
+    description: "Login email/contraseña en /login/ (Supabase Auth).",
+    status: "done",
     updatedAt: "2026-05-29",
   },
   {
@@ -74,4 +74,4 @@ export const PROJECT_MODULES: ProjectModule[] = [
   },
 ];
 
-export const PROJECT_VERSION = "0.2.0";
+export const PROJECT_VERSION = "0.3.0";

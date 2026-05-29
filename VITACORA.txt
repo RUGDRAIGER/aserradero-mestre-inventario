@@ -282,3 +282,36 @@ Pantalla lista de inventario en la web + login supervisor (Supabase Auth).
 ================================================================================
 FIN ENTRADA #006
 ================================================================================
+
+================================================================================
+ENTRADA #007
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: PANTALLA INVENTARIO + LOGIN SUPERVISOR (v0.3.0)
+
+IMPLEMENTACIÓN
+--------------
+- /inventario/ — tabla de stock desde Supabase (SKU, categoría, almacén, estado Normal/Bajo/Crítico).
+- /login/ — ingreso supervisor con email/contraseña (Supabase Auth).
+- NavBar global: Avance, Inventario, Ingresar/Salir.
+- AuthProvider: sesión persistente en cliente.
+- Supervisor autenticado: botón "+ Stock" registra ENTRADA_AJUSTE en inventory_movements.
+- Página avance: enlaces rápidos a inventario y login.
+- Versión app: 0.3.0. Módulos inventario y auth → done.
+
+PRUEBA USUARIO
+--------------
+1. Inventario (lectura pública): .../aserradero-mestre-inventario/inventario/
+2. Crear usuario en Supabase Authentication si no existe.
+3. Login: .../login/ → probar reposición de stock.
+
+PENDIENTE SIGUIENTE FASE
+------------------------
+- Kiosk retiro con biometría.
+- Comprobante PDF y correlativo.
+- Dashboard supervisor (rankings, alertas).
+
+================================================================================
+FIN ENTRADA #007
+================================================================================

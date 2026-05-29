@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SupabaseStatus } from "@/components/SupabaseStatus";
 import {
   PROJECT_MODULES,
@@ -27,6 +28,11 @@ export default function HomePage() {
           Versión {PROJECT_VERSION} · Avance {pct}% ({done}/{total} módulos)
         </span>
       </header>
+
+      <div className="quick-links">
+        <Link href="/inventario/">Ver inventario</Link>
+        <Link href="/login/">Ingreso supervisor</Link>
+      </div>
 
       <section>
         <h2>Estado Supabase</h2>

@@ -35,9 +35,274 @@ a {
 }
 
 main {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1.25rem 4rem;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-brand a {
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+.nav-user {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.btn-nav {
+  padding: 0.35rem 0.75rem;
+  background: var(--accent);
+  color: #0a120c !important;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: var(--accent);
+  color: #0a120c;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  background: var(--accent);
+  color: #0a120c;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.hero-compact {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.hero-compact h1 {
+  font-size: 1.4rem;
+}
+
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.quick-links a {
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.quick-links a:hover {
+  border-color: var(--accent);
+}
+
+.banner-readonly {
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid #6b5a20;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table .mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.data-table .qty {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cat-code {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.stock-pill {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.stock-ok {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--ok);
+}
+
+.stock-low {
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--warn);
+}
+
+.stock-critical {
+  background: rgba(196, 92, 92, 0.2);
+  color: var(--danger);
+}
+
+.restock-form {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.restock-form input {
+  width: 4.5rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.table-footer {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.form-section {
+  max-width: 400px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.login-form input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.help-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+.help-box h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.help-box p {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+}
+
+.error-msg {
+  color: var(--danger);
+  font-size: 0.9rem;
 }
 
 header.hero {
