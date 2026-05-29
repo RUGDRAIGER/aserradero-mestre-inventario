@@ -6,14 +6,7 @@
 |--------|--------|-------------|
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Configurado | Build de la web |
 | `SUPABASE_DB_PASSWORD` | Configurado | Contraseña de PostgreSQL del proyecto |
-| `SUPABASE_ACCESS_TOKEN` | **Pendiente** | Token personal en [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
-
-## Cómo añadir el token que falta
-
-1. https://supabase.com/dashboard/account/tokens → **Generate new token**
-2. https://github.com/RUGDRAIGER/aserradero-mestre-inventario/settings/secrets/actions
-3. **New repository secret** → nombre: `SUPABASE_ACCESS_TOKEN` → pegar token → guardar
-4. **Actions** → **Aplicar migraciones Supabase** → **Run workflow**
+| `SUPABASE_ACCESS_TOKEN` | Configurado | Token personal en [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
 
 ## Seguridad
 

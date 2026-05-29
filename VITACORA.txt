@@ -327,7 +327,7 @@ SECRETS GITHUB (Actions)
 ------------------------
 - SUPABASE_DB_PASSWORD: configurado vía gh secret (no guardado en archivos del repo).
 - NEXT_PUBLIC_SUPABASE_ANON_KEY: ya existía.
-- SUPABASE_ACCESS_TOKEN: PENDIENTE (usuario debe crearlo en Account → Access Tokens).
+- SUPABASE_ACCESS_TOKEN: configurado en GitHub Secrets (2026-05-29). Token expuesto en chat → revocar y rotar.
 
 WORKFLOW NUEVO
 --------------
