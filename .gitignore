@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# next
+/.next/
+/out/
+
+# env
+.env
+.env*.local
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+*.pem
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# IDE
+.idea
+.vscode

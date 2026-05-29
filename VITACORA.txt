@@ -1,0 +1,109 @@
+================================================================================
+VITACORA — PROYECTO ASERRADERO MESTRE
+Sistema de inventario con biometría, comprobantes PDF y panel supervisor
+================================================================================
+
+REGLAS DE ESTE ARCHIVO
+----------------------
+- Nombre del archivo activo: VITACORA.txt (si existe VITACORA02.txt, el activo es el de mayor número sin llenar).
+- Cuando el archivo activo alcance 5000 líneas, crear el siguiente: VITACORA02.txt, VITACORA03.txt, etc.
+- Cada entrada debe ser textual, con fecha/hora, autor (agente o humano), y descripción clara de cambios.
+- No borrar entradas históricas; solo agregar al final del archivo activo.
+
+ÍNDICE DE ARCHIVOS DE BITÁCORA
+------------------------------
+- VITACORA.txt     (activo) — líneas aproximadas: ver pie de última entrada
+
+================================================================================
+ENTRADA #001
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor (arquitectura e implementación inicial)
+Estado del workspace: Carpeta de proyecto vacía (solo propuesta técnica en conversación previa).
+
+RESUMEN DE LA PROPUESTA TÉCNICA (CONVERSACIÓN ANTERIOR)
+------------------------------------------------------
+Se definió arquitectura para aserradero con:
+1. Flujo biométrico antes de descontar stock (estados: borrador → biometría → validación → descuento → PDF).
+2. PDF server-side con correlativo único y sync a nube (Storage + Drive/S3).
+3. Inventario en tiempo real con libro de movimientos (entradas/salidas).
+4. Dashboard supervisor: consumo, ranking trabajadores, alertas stock bajo.
+5. Stack propuesto: Supabase (PostgreSQL, Auth, Realtime, Storage, Edge Functions), Next.js, puente biométrico local.
+6. URL Supabase del cliente: https://qshvtyzedbghgsbpzzcn.supabase.co
+7. Pendiente: credenciales y esquema actual de Supabase para conectar y migrar tablas.
+
+================================================================================
+ENTRADA #002
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: INICIO DE IMPLEMENTACIÓN SEGÚN SOLICITUD DEL USUARIO
+
+PEDIDOS DEL USUARIO (ESTA SESIÓN)
+---------------------------------
+1. Crear archivo VITACORA.txt (y sucesivos cada 5000 líneas) documentando todo textualmente.
+2. Crear repositorio Git y conectar a GitHub (cuenta RUGDRAIGER; token opcional del usuario).
+3. Crear página web para probar el avance del proyecto.
+4. Entregar pasos claros de qué se necesita de Supabase.
+5. Mantener el proyecto preparado para manipular Supabase conforme avance la implementación.
+
+ACCIONES EJECUTADAS EN ESTA ENTRADA
+-----------------------------------
+A) VITACORA.txt
+   - Creado este archivo con reglas de rotación a 5000 líneas y primera bitácora.
+
+B) Estructura del repositorio (plan inmediato)
+   - Aplicación Next.js con export estático compatible con GitHub Pages.
+   - Página principal "Avance del proyecto" con hitos, estado de módulos y prueba de conexión Supabase.
+   - Carpeta supabase/ para migraciones SQL futuras.
+   - Documento docs/SUPABASE_PASOS.md con checklist para el usuario.
+   - Archivo .env.example (sin secretos en el repo).
+
+C) Git y GitHub
+   - Inicialización de repositorio git local.
+   - Creación de repositorio remoto en GitHub vía CLI (gh) si la cuenta ya está autenticada.
+   - Configuración de GitHub Pages para previsualizar la página de avance.
+
+D) Supabase
+   - Cliente @supabase/supabase-js en el frontend para health-check cuando existan variables de entorno.
+   - Sin service_role en el cliente; solo anon key en variables públicas.
+
+MÓDULOS DEL SISTEMA (ESTADO INICIAL)
+-----------------------------------
+| Módulo                         | Estado        | Notas                          |
+|--------------------------------|---------------|--------------------------------|
+| Bitácora VITACORA              | EN CURSO      | Este archivo                   |
+| Repositorio Git / GitHub       | EN CURSO      | Push y Pages                   |
+| Página de avance               | EN CURSO      | Next.js estático               |
+| Esquema DB Supabase            | PENDIENTE     | Requiere keys del usuario      |
+| Auth supervisores              | PENDIENTE     | Supabase Auth                  |
+| Catálogo inventario            | PENDIENTE     | Tras migraciones               |
+| Flujo biométrico               | PENDIENTE     | Hardware por definir           |
+| PDF + correlativo              | PENDIENTE     | Edge Functions                 |
+| Dashboard analítica            | PENDIENTE     | Tras datos de prueba           |
+| Alertas stock bajo             | PENDIENTE     | Cron / Edge                    |
+
+PRÓXIMOS PASOS (AGENTE)
+-----------------------
+1. Finalizar scaffold Next.js y página /avance.
+2. Commit inicial y push a GitHub.
+3. Activar GitHub Pages (workflow o rama gh-pages).
+4. Cuando el usuario entregue anon key + confirmación de esquema: aplicar migraciones en supabase/migrations.
+5. Actualizar VITACORA con URLs del repo y de la página publicada.
+
+INFORMACIÓN QUE EL USUARIO DEBE ENTREGAR (SUPABASE)
+---------------------------------------------------
+Ver archivo: docs/SUPABASE_PASOS.md (checklist detallado).
+Mínimo inmediato:
+- SUPABASE_ANON_KEY (Settings → API → anon public)
+- Confirmar si la base public está vacía o pegar listado de tablas
+- Opcional para migraciones automáticas: SUPABASE_DB_PASSWORD o uso de Supabase CLI linkeado
+
+SEGURIDAD
+---------
+- NO commitear .env.local ni service_role key.
+- El token de GitHub del usuario no se guardará en archivos del proyecto.
+
+================================================================================
+FIN ENTRADA #002 — Líneas totales aproximadas en este archivo: < 120
+================================================================================
