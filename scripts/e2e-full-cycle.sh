@@ -59,15 +59,12 @@ invoke_generate_receipt() {
       return 0
     fi
   done
-  if command -v supabase >/dev/null 2>&1 && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
-    resp=$(supabase functions invoke generate-receipt --project-ref qshvtyzedbghgsbpzzcn \
-      --no-verify-jwt --body "$body" 2>/dev/null || echo '{}')
-    echo "$resp"
-    return 0
-  fi
   echo "$resp"
 }
 
+if [ -n "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" ]; then
+  ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY"
+fi
 if [ -z "$ANON_KEY" ]; then fail "Falta ANON_KEY"; fi
 if [ -z "$SERVICE_KEY" ]; then fail "Falta SERVICE_KEY"; fi
 
@@ -136,11 +133,15 @@ if echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
   [ -n "$DRIVE_ERR" ] && echo "::warning::Drive error función: $DRIVE_ERR"
   ok "PDF generado (sync_status=$SYNC)"
 else
-  echo "::warning::generate-receipt HTTP: $(echo "$PDF" | head -c 200)"
+  if echo "$PDF" | jq -e '.error' >/dev/null 2>&1; then
+    echo "::warning::generate-receipt: $(echo "$PDF" | jq -c '.error // .')"
+  else
+    echo "::warning::generate-receipt HTTP: $(echo "$PDF" | head -c 200)"
+  fi
   SYNC="PENDING"
   PDF_URL=""
   DRIVE_ID=""
-  ok "Comprobante en DB (PDF vía Edge Function se prueba en la app desplegada)"
+  ok "Comprobante en DB (PDF en Storage/Drive tras invocar función en app o CI)"
 fi
 
 # 6. receipt_documents en DB

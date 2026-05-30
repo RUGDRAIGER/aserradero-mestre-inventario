@@ -61,16 +61,25 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
+          # Doble deploy: evita 404 transitorio tras CI (supabase/supabase#35426)
+          supabase functions deploy generate-receipt --no-verify-jwt --project-ref qshvtyzedbghgsbpzzcn
+          sleep 5
           supabase functions deploy generate-receipt --no-verify-jwt --project-ref qshvtyzedbghgsbpzzcn
           echo "Funciones desplegadas:"
           supabase functions list --project-ref qshvtyzedbghgsbpzzcn || true
           echo "Esperando propagación de Edge Functions..."
           sleep 25
-          echo "Verificando invocación generate-receipt..."
-          supabase functions invoke generate-receipt --project-ref qshvtyzedbghgsbpzzcn \
-            --no-verify-jwt \
-            --body '{"request_id":"00000000-0000-0000-0000-000000000000"}' \
-            || echo "::warning::invoke CLI devolvió error (esperable si UUID no existe)"
+          echo "Verificando ruta HTTP generate-receipt..."
+          CODE=$(curl -sS -o /tmp/fn-probe.json -w "%{http_code}" -X POST \
+            "${SUPABASE_URL}/functions/v1/generate-receipt" \
+            -H "apikey: ${{ steps.keys.outputs.anon }}" \
+            -H "Authorization: Bearer ${{ steps.keys.outputs.service }}" \
+            -H "Content-Type: application/json" \
+            -d '{"request_id":"00000000-0000-0000-0000-000000000000"}' || echo "000")
+          echo "HTTP $CODE — $(head -c 200 /tmp/fn-probe.json)"
+          if [ "$CODE" = "404" ] && grep -q 'Requested function was not found' /tmp/fn-probe.json 2>/dev/null; then
+            echo "::warning::Gateway no enruta generate-receipt desde CI (función ACTIVE en list). La app en Pages usa el cliente JS."
+          fi
 
       - name: Asegurar usuario supervisor demo
         env:
@@ -141,13 +150,14 @@ jobs:
             fi
             echo "::warning::E2E falló en intento $attempt"
             if [ "$attempt" -lt 3 ]; then
-              echo "Re-sincronizando solo secrets Drive (sin redesplegar función)..."
+              echo "Re-sincronizando secrets Drive y redesplegando generate-receipt..."
               COMPACT_JSON=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -c .)
               printf 'GOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_SERVICE_ACCOUNT_JSON=%s\n' \
                 "$GOOGLE_DRIVE_FOLDER_ID" "$COMPACT_JSON" > /tmp/supabase-secrets.env
               supabase secrets set --project-ref qshvtyzedbghgsbpzzcn --env-file /tmp/supabase-secrets.env || true
               rm -f /tmp/supabase-secrets.env
-              sleep 10
+              supabase functions deploy generate-receipt --no-verify-jwt --project-ref qshvtyzedbghgsbpzzcn || true
+              sleep 15
             fi
           done
           if [ "$E2E_OK" -ne 0 ]; then
