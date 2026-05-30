@@ -104,7 +104,7 @@ async function folderWritable(folderId: string, token: string): Promise<boolean>
   if (!res.ok) return false;
   const meta = await res.json();
   if (meta.mimeType !== "application/vnd.google-apps.folder") return false;
-  return meta.capabilities?.canAddChildren !== false;
+  return meta.capabilities?.canAddChildren === true;
 }
 
 /** Carpetas compartidas con la cuenta de servicio (cuando el ID del secret es incorrecto). */

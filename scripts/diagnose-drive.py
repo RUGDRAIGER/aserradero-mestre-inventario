@@ -80,7 +80,7 @@ def main() -> int:
             if meta.get("mimeType") != "application/vnd.google-apps.folder":
                 return False, "El ID no es una carpeta."
             caps = meta.get("capabilities") or {}
-            if caps.get("canAddChildren") is False:
+            if not caps.get("canAddChildren"):
                 return False, (
                     f"La carpeta existe pero sin permiso de escritura. "
                     f"Comparte con {email} como Editor (no Lector)."
