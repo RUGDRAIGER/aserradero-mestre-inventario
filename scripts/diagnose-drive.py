@@ -104,24 +104,48 @@ def main() -> int:
         )
         return data.get("files", [])
 
+    import re
+
+    keywords = re.compile(r"aserradero|mestre|comprobante|pdf|inventario", re.I)
     parent = folder_id
-    ok_folder, reason = folder_ok(parent, token)
-    if not ok_folder:
-        shared = shared_folders(token)
-        if shared:
-            parent = shared[0]["id"]
-            ok_folder, reason = folder_ok(parent, token)
+    folder_name = ""
+    shared = shared_folders(token)
+    if shared:
+        print("Carpetas compartidas con la cuenta de servicio:")
+        for f in shared:
+            print(f"  - «{f.get('name')}» → {f.get('id')}")
+        ordered = (
+            [f for f in shared if keywords.search(f.get("name", ""))]
+            + [f for f in shared if f.get("id") == folder_id]
+            + shared
+        )
+        seen = set()
+        for f in ordered:
+            fid = f.get("id")
+            if not fid or fid in seen:
+                continue
+            seen.add(fid)
+            ok_folder, reason = folder_ok(fid, token)
             if ok_folder:
-                print(
-                    f"AVISO: carpeta del secret sin escritura; usando "
-                    f"«{shared[0].get('name')}» ({parent})",
-                    file=sys.stderr,
-                )
-        if not ok_folder:
+                parent = fid
+                folder_name = f.get("name", "")
+                if fid != folder_id:
+                    print(
+                        f"AVISO: usando carpeta compartida «{folder_name}» ({parent}); "
+                        f"actualiza GOOGLE_DRIVE_FOLDER_ID con este ID.",
+                        file=sys.stderr,
+                    )
+                break
+        else:
             print(reason or f"Ninguna carpeta con permiso Editor para {email}.", file=sys.stderr)
             return 1
+    else:
+        ok_folder, reason = folder_ok(parent, token)
+        if not ok_folder:
+            print(reason or f"Ninguna carpeta compartida con {email}.", file=sys.stderr)
+            return 1
 
-    print(f"Carpeta destino verificada: {parent}")
+    print(f"Carpeta destino: «{folder_name or parent}» ({parent})")
     test_name = "e2e-drive-test.txt"
     metadata = json.dumps({"name": test_name, "parents": [parent], "mimeType": "text/plain"})
     boundary = "e2eBoundary"

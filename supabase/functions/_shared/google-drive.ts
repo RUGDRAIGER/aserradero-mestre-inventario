@@ -107,8 +107,9 @@ async function folderWritable(folderId: string, token: string): Promise<boolean>
   return meta.capabilities?.canAddChildren === true;
 }
 
-/** Carpetas compartidas con la cuenta de servicio (cuando el ID del secret es incorrecto). */
-async function findSharedFolder(token: string, preferId?: string): Promise<string | null> {
+type DriveFolder = { id: string; name: string };
+
+async function listSharedFolders(token: string): Promise<DriveFolder[]> {
   const q = encodeURIComponent(
     "sharedWithMe and mimeType='application/vnd.google-apps.folder' and trashed=false",
   );
@@ -116,13 +117,9 @@ async function findSharedFolder(token: string, preferId?: string): Promise<strin
     `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=50&supportsAllDrives=true&includeItemsFromAllDrives=true`,
     { headers: { Authorization: `Bearer ${token}` } },
   );
-  if (!res.ok) return null;
-  const files = (await res.json()).files as { id: string; name: string }[];
-  if (!files?.length) return null;
-  if (preferId && files.some((f) => f.id === preferId)) return preferId;
-  const keywords = /aserradero|mestre|comprobante|pdf|inventario/i;
-  const match = files.find((f) => keywords.test(f.name));
-  return (match ?? files[0]).id;
+  if (!res.ok) return [];
+  const files = (await res.json()).files as DriveFolder[];
+  return files ?? [];
 }
 
 async function resolveParentFolder(
@@ -130,14 +127,36 @@ async function resolveParentFolder(
   token: string,
   saEmail: string,
 ): Promise<string> {
-  const parentId = normalizeFolderId(folderId);
-  if (await folderWritable(parentId, token)) return parentId;
+  const configured = normalizeFolderId(folderId);
+  const shared = await listSharedFolders(token);
+  const keywords = /aserradero|mestre|comprobante|pdf|inventario/i;
 
-  const shared = await findSharedFolder(token, parentId);
-  if (shared) {
-    console.warn(`Drive: usando carpeta compartida ${shared} (ID configurado ${parentId} no accesible)`);
-    return shared;
+  if (shared.length) {
+    console.log(
+      "Drive carpetas compartidas:",
+      shared.map((f) => `${f.name}=${f.id}`).join(", "),
+    );
+    const ordered = [
+      ...shared.filter((f) => keywords.test(f.name)),
+      ...shared.filter((f) => f.id === configured),
+      ...shared,
+    ];
+    const seen = new Set<string>();
+    for (const f of ordered) {
+      if (seen.has(f.id)) continue;
+      seen.add(f.id);
+      if (await folderWritable(f.id, token)) {
+        if (f.id !== configured) {
+          console.warn(
+            `Drive: usando carpeta compartida «${f.name}» (${f.id}); secret tenía ${configured}`,
+          );
+        }
+        return f.id;
+      }
+    }
   }
+
+  if (await folderWritable(configured, token)) return configured;
 
   throw new Error(driveErrorMessage(404, "notFound", saEmail));
 }
