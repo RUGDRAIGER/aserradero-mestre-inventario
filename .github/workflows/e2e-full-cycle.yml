@@ -48,9 +48,6 @@ jobs:
           echo "anon=${ANON}" >> "$GITHUB_OUTPUT"
           echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
 
-      - name: Instalar cliente PostgreSQL
-        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
-
       - name: Aplicar migraciones pendientes (RLS supervisor)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -58,9 +55,6 @@ jobs:
         run: |
           supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD"
           supabase db push --include-all
-          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-            -h "db.qshvtyzedbghgsbpzzcn.supabase.co" -p 5432 -U postgres -d postgres \
-            -v ON_ERROR_STOP=1 -f supabase/APPLY_SUPERVISOR_RLS.sql
 
       - name: Desplegar Edge Function generate-receipt
         env:
