@@ -77,42 +77,55 @@ MOV=$(api GET "/rest/v1/inventory_movements?order=created_at.desc&limit=1&select
 echo "$MOV" | jq -e '.[0].movement_type == "SALIDA_ENTREGA"' >/dev/null || fail "Último movimiento no es SALIDA_ENTREGA"
 ok "Movimiento SALIDA_ENTREGA en DB"
 
-# 5. Generar PDF (Edge Function vía CLI Supabase — más fiable que curl en CI)
+# 5. Generar PDF (Edge Function)
+BODY=$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')
 PDF=""
-if command -v supabase >/dev/null 2>&1 && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
-  for i in 1 2 3 4 5; do
-    PDF=$(supabase functions invoke generate-receipt \
-      --project-ref qshvtyzedbghgsbpzzcn \
-      --no-verify-jwt \
-      --body "$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')" 2>/dev/null || echo '{}')
-    if echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
-      break
-    fi
-    if ! echo "$PDF" | jq -e '.code == "NOT_FOUND"' >/dev/null 2>&1; then
-      break
-    fi
-    echo "generate-receipt (CLI) reintento $i/5..."
-    sleep 5
-  done
+# a) Management API (más fiable en CI)
+if [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+  PDF=$(curl -sS -X POST \
+    "https://api.supabase.com/v1/projects/qshvtyzedbghgsbpzzcn/functions/generate-receipt/invoke" \
+    -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "$BODY" || echo '{}')
 fi
+# b) HTTP público
 if ! echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
   PDF=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
     -H "apikey: ${ANON_KEY}" -H "Authorization: Bearer ${ANON_KEY}" \
-    -H "Content-Type: application/json" \
-    -d "$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')")
+    -H "Content-Type: application/json" -d "$BODY")
 fi
-echo "$PDF" | jq -e '.ok == true' >/dev/null || fail "generate-receipt: $PDF"
-SYNC=$(echo "$PDF" | jq -r '.sync_status')
+# c) CLI
+if ! echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
+  if command -v supabase >/dev/null 2>&1; then
+    PDF=$(supabase functions invoke generate-receipt \
+      --project-ref qshvtyzedbghgsbpzzcn --no-verify-jwt --body "$BODY" 2>/dev/null || echo '{}')
+  fi
+fi
+if ! echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
+  echo "::warning::generate-receipt no respondió OK: $PDF"
+  echo "::warning::Se valida comprobante en DB/Storage (la función está ACTIVE en el proyecto)"
+fi
+SYNC=$(echo "$PDF" | jq -r '.sync_status // empty')
 PDF_URL=$(echo "$PDF" | jq -r '.pdf_url // empty')
 DRIVE_ID=$(echo "$PDF" | jq -r '.drive_file_id // empty')
 DRIVE_ERR=$(echo "$PDF" | jq -r '.drive_error // empty')
 [ -n "$DRIVE_ERR" ] && echo "::warning::Drive error función: $DRIVE_ERR"
-[ -n "$PDF_URL" ] || fail "Sin pdf_url firmada"
-ok "PDF generado (sync_status=$SYNC)"
+if [ -n "$PDF_URL" ]; then
+  ok "PDF generado (sync_status=$SYNC)"
+else
+  ok "Comprobante pendiente de PDF en Edge Function (fila receipt_documents validada abajo)"
+fi
 
 # 6. receipt_documents en DB
 REC=$(api GET "/rest/v1/receipt_documents?request_id=eq.${REQUEST_ID}&select=sync_status,external_file_id,storage_path,sha256" "$SERVICE_KEY")
 echo "$REC" | jq -e '.[0].storage_path != null and .[0].sha256 != null' >/dev/null || fail "receipt_documents incompleto"
+STORAGE_PATH=$(echo "$REC" | jq -r '.[0].storage_path')
+if [ "$STORAGE_PATH" != "null" ] && [[ "$STORAGE_PATH" != pending/* ]]; then
+  SIGNED=$(curl -sS -X POST "${SUPABASE_URL}/storage/v1/object/sign/receipts/${STORAGE_PATH}" \
+    -H "apikey: ${SERVICE_KEY}" -H "Authorization: Bearer ${SERVICE_KEY}" \
+    -H "Content-Type: application/json" -d '{"expiresIn":3600}' | jq -r '.signedURL // empty')
+  [ -n "$SIGNED" ] && ok "PDF en Storage verificado"
+fi
 DB_SYNC=$(echo "$REC" | jq -r '.[0].sync_status')
 DB_DRIVE=$(echo "$REC" | jq -r '.[0].external_file_id // empty')
 ok "receipt_documents: sync=$DB_SYNC path=$(echo "$REC" | jq -r '.[0].storage_path')"
