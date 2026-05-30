@@ -110,7 +110,9 @@ def main() -> int:
             )
             return 1
 
-    metadata = json.dumps({"name": name, "parents": [parent], "mimeType": "text/plain"})
+    print(f"Carpeta destino verificada: {parent}")
+    test_name = "e2e-drive-test.txt"
+    metadata = json.dumps({"name": test_name, "parents": [parent], "mimeType": "text/plain"})
     boundary = "e2eBoundary"
     content = b"E2E test Aserradero Mestre"
     parts = (
