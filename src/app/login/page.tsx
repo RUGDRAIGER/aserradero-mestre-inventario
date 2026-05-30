@@ -76,15 +76,33 @@ export default function LoginPage() {
         </form>
 
         <div className="help-box">
-          <h3>Primera vez</h3>
-          <p>
-            Crea el usuario en Supabase → <strong>Authentication</strong> →{" "}
-            <strong>Users</strong> → <strong>Add user</strong> → Create new user
-            (email + contraseña).
+          <h3>No hay usuario creado aún — créalo en Supabase</h3>
+          <ol className="help-steps">
+            <li>
+              Abre{" "}
+              <a
+                href="https://supabase.com/dashboard/project/qshvtyzedbghgsbpzzcn/auth/users"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Authentication → Users
+              </a>
+            </li>
+            <li>
+              <strong>Add user</strong> → Create new user → email + contraseña
+            </li>
+            <li>
+              Marca <strong>Auto Confirm User</strong> → Create user
+            </li>
+            <li>Vuelve aquí e ingresa con ese email y contraseña</li>
+          </ol>
+          <p className="muted small">
+            Ejemplo: <code>supervisor@aserradero-mestre.demo</code> y una
+            contraseña que elijas (tú la defines en Supabase).
           </p>
           <p>
-            <Link href="/inventario/">Ver inventario sin ingresar</Link> (solo
-            lectura).
+            <Link href="/inventario/">Inventario</Link> (solo lectura) ·{" "}
+            <Link href="/retiro/">Kiosk retiro</Link> (sin login)
           </p>
         </div>
       </section>

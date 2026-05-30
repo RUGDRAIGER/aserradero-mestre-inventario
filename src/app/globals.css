@@ -300,6 +300,22 @@ main {
   color: var(--muted);
 }
 
+.help-steps {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.help-steps li {
+  margin-bottom: 0.35rem;
+}
+
+.help-box code {
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
 .error-msg {
   color: var(--danger);
   font-size: 0.9rem;
