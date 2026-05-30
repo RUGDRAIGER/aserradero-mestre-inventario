@@ -1,21 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
+import { navigateTo } from "@/lib/navigation";
 
 export default function LoginPage() {
   const { user, loading, signIn } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/supervisor/");
-  }, [user, loading, router]);
+    if (!loading && user) navigateTo("/supervisor/");
+  }, [user, loading]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -27,7 +26,7 @@ export default function LoginPage() {
       setError(err);
       return;
     }
-    router.replace("/supervisor/");
+    navigateTo("/supervisor/");
   }
 
   if (loading) {

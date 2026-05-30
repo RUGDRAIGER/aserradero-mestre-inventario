@@ -12,10 +12,9 @@
 | **Email** | `supervisor@aserradero-mestre.demo` |
 | **Contraseña** | `MestreSuper2026!` |
 
-**Crear el usuario:** https://supabase.com/dashboard/project/qshvtyzedbghgsbpzzcn/auth/users  
-→ Add user → Create new user → pegar email y contraseña → **Auto Confirm User** ✓ → Create.
+El usuario **ya fue creado** automáticamente (workflow *Crear usuario supervisor demo*). Si falla el login, ejecuta de nuevo ese workflow en GitHub Actions.
 
-Tras crearlo, entra en **Supervisor** y **Bodega**.
+Creación manual (solo si hiciera falta): https://supabase.com/dashboard/project/qshvtyzedbghgsbpzzcn/auth/users → Add user → **Auto Confirm User** ✓.
 
 ---
 
