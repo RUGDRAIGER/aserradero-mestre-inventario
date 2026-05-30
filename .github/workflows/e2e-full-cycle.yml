@@ -130,19 +130,13 @@ jobs:
             fi
             echo "::warning::E2E falló en intento $attempt"
             if [ "$attempt" -lt 3 ]; then
-              echo "Sincronizando Drive secrets y redesplegando función..."
+              echo "Re-sincronizando solo secrets Drive (sin redesplegar función)..."
               COMPACT_JSON=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -c .)
               printf 'GOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_SERVICE_ACCOUNT_JSON=%s\n' \
                 "$GOOGLE_DRIVE_FOLDER_ID" "$COMPACT_JSON" > /tmp/supabase-secrets.env
               supabase secrets set --project-ref qshvtyzedbghgsbpzzcn --env-file /tmp/supabase-secrets.env || true
               rm -f /tmp/supabase-secrets.env
-              supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD" || true
-              for d in 1 2 3; do
-                if supabase functions deploy generate-receipt --no-verify-jwt; then break; fi
-                echo "::warning::Deploy intento $d falló, reintento en 5s..."
-                sleep 5
-              done
-              sleep 8
+              sleep 10
             fi
           done
           if [ "$E2E_OK" -ne 0 ]; then
