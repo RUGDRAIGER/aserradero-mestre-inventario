@@ -56,6 +56,13 @@ jobs:
           supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD"
           supabase db push --include-all
 
+      - name: Desplegar Edge Function generate-receipt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase functions deploy generate-receipt --no-verify-jwt
+
       - name: Asegurar usuario supervisor demo
         env:
           SERVICE_KEY: ${{ steps.keys.outputs.service }}

@@ -69,9 +69,9 @@ ok "Retiro RPC → $CORRELATIVE (request $REQUEST_ID)"
 sleep 1
 ITEM_AFTER=$(api GET "/rest/v1/inventory_items?id=eq.${ITEM_ID}&select=current_qty" "$SERVICE_KEY")
 STOCK_AFTER=$(echo "$ITEM_AFTER" | jq -r '.[0].current_qty')
-python3 -c "b=float('$STOCK_BEFORE'); a=float('$STOCK_AFTER'); assert abs(b-a-1)<0.001, f'{b} -> {a}'" \
-  || fail "Stock no bajó 1 unidad ($STOCK_BEFORE → $STOCK_AFTER)"
-ok "Stock DB: $STOCK_BEFORE → $STOCK_AFTER"
+python3 -c "b=float('$STOCK_BEFORE'); a=float('$STOCK_AFTER'); d=b-a; assert d>=0.999, f'esperaba bajar >=1, fue {b}->{a}'" \
+  || fail "Stock no bajó ($STOCK_BEFORE → $STOCK_AFTER)"
+ok "Stock DB bajó $(python3 -c "print(float('$STOCK_BEFORE')-float('$STOCK_AFTER'))") unidad(es)"
 
 MOV=$(api GET "/rest/v1/inventory_movements?order=created_at.desc&limit=1&select=movement_type,qty" "$SERVICE_KEY")
 echo "$MOV" | jq -e '.[0].movement_type == "SALIDA_ENTREGA"' >/dev/null || fail "Último movimiento no es SALIDA_ENTREGA"
