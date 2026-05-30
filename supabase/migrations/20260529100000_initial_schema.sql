@@ -1,1 +1,0 @@
--- Ver supabase/APPLY_IN_DASHBOARD.sql (mismo contenido para aplicar en SQL Editor)

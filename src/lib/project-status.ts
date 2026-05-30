@@ -54,15 +54,15 @@ export const PROJECT_MODULES: ProjectModule[] = [
   {
     id: "biometric",
     name: "Flujo biométrico",
-    description: "Validación antes de descontar stock.",
-    status: "pending",
+    description: "Kiosk /retiro/ con RPC y huella demo; lector físico pendiente.",
+    status: "in_progress",
     updatedAt: "2026-05-29",
   },
   {
     id: "pdf",
     name: "Comprobantes PDF",
-    description: "Correlativo único, generación server-side, Storage.",
-    status: "pending",
+    description: "Correlativo asignado; PDF server-side pendiente.",
+    status: "in_progress",
     updatedAt: "2026-05-29",
   },
   {
@@ -74,4 +74,4 @@ export const PROJECT_MODULES: ProjectModule[] = [
   },
 ];
 
-export const PROJECT_VERSION = "0.3.0";
+export const PROJECT_VERSION = "0.4.0";

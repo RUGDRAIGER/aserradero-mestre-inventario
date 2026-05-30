@@ -14,6 +14,7 @@ export function NavBar() {
       <div className="nav-links">
         <Link href="/">Avance</Link>
         <Link href="/inventario/">Inventario</Link>
+        <Link href="/retiro/">Retiro</Link>
         {!loading && user ? (
           <>
             <span className="nav-user" title={user.email ?? ""}>

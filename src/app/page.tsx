@@ -31,6 +31,7 @@ export default function HomePage() {
 
       <div className="quick-links">
         <Link href="/inventario/">Ver inventario</Link>
+        <Link href="/retiro/">Kiosk de retiro</Link>
         <Link href="/login/">Ingreso supervisor</Link>
       </div>
 

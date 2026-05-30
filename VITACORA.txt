@@ -341,3 +341,31 @@ SEGURIDAD
 ================================================================================
 FIN ENTRADA #008
 ================================================================================
+
+================================================================================
+ENTRADA #009
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: KIOSK DE RETIRO v0.4.0 (BIOMETRÍA DEMO + DESCUENTO STOCK)
+
+IMPLEMENTACIÓN
+--------------
+- Migración 20260530100000_kiosk_retiro.sql: 3 trabajadores demo, RPC process_withdrawal_demo.
+- Página /retiro/: selección trabajador, carrito, verificación huella (simulada), correlativo.
+- Descuento atómico en BD, movimiento SALIDA_ENTREGA, registro biometric_validations.
+- receipt_documents con correlativo (PDF pendiente fase siguiente).
+- Nav y página avance actualizados. Versión 0.4.0.
+
+DESPLIEGUE
+----------
+- Push a main → GitHub Actions: migraciones + Pages.
+- Respaldo manual: supabase/APPLY_KIOSK.sql en SQL Editor.
+
+NOTA USUARIO
+------------
+Claves sin rotar hasta fin de proyecto (solicitud explícita).
+
+================================================================================
+FIN ENTRADA #009
+================================================================================
