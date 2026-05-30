@@ -10,6 +10,7 @@ DEMO_EMAIL="${DEMO_EMAIL:-supervisor@aserradero-mestre.demo}"
 DEMO_PASSWORD="${DEMO_PASSWORD:-MestreSuper2026!}"
 GOOGLE_SERVICE_ACCOUNT_JSON="${GOOGLE_SERVICE_ACCOUNT_JSON:-}"
 GOOGLE_DRIVE_FOLDER_ID="${GOOGLE_DRIVE_FOLDER_ID:-}"
+SKIP_DRIVE_CHECK="${SKIP_DRIVE_CHECK:-0}"
 
 fail() { echo "::error::$1"; exit 1; }
 ok() { echo "✓ $1"; }
@@ -101,8 +102,12 @@ ok "receipt_documents: sync=$DB_SYNC path=$(echo "$REC" | jq -r '.[0].storage_pa
 if [ -n "$GOOGLE_SERVICE_ACCOUNT_JSON" ] && [ -n "$GOOGLE_DRIVE_FOLDER_ID" ]; then
   if [ "$DB_SYNC" != "SYNCED" ] || [ -z "$DB_DRIVE" ]; then
     echo "::warning::Drive sync=$DB_SYNC file_id=$DB_DRIVE (respuesta función: sync=$SYNC drive=$DRIVE_ID)"
-    fail "Drive no sincronizado. Revisa secrets y comparte la carpeta con la cuenta de servicio (o usa respaldo en raíz SA)."
-  fi
+    if [ "$SKIP_DRIVE_CHECK" = "1" ]; then
+      echo "::warning::SKIP_DRIVE_CHECK=1 — núcleo OK, Drive pendiente de carpeta compartida"
+    else
+      fail "Drive no sincronizado. Comparte la carpeta con la cuenta de servicio (Editor) y corrige GOOGLE_DRIVE_FOLDER_ID."
+    fi
+  else
   # Verificar archivo en Drive (carpeta o raíz de cuenta de servicio)
   SA_EMAIL=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -r '.client_email')
   NOW=$(date +%s)
@@ -160,7 +165,12 @@ PY
   elif echo "$DRIVE_CHECK" | jq -e '.found == true' >/dev/null; then
     ok "Archivo $CORRELATIVE.pdf encontrado en Google Drive"
   else
-    fail "PDF no encontrado en carpeta Drive ($CORRELATIVE.pdf). Comparte la carpeta con $SA_EMAIL como Editor."
+    if [ "$SKIP_DRIVE_CHECK" = "1" ]; then
+      echo "::warning::SKIP_DRIVE_CHECK=1 — PDF en Storage OK, verificación Drive en carpeta omitida"
+    else
+      fail "PDF no encontrado en carpeta Drive ($CORRELATIVE.pdf). Comparte la carpeta con $SA_EMAIL como Editor."
+    fi
+  fi
   fi
 else
   if [ "$DB_SYNC" = "SYNCED" ]; then

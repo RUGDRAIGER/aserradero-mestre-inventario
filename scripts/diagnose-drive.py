@@ -18,7 +18,12 @@ def b64url(data: bytes) -> str:
 
 def main() -> int:
     sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
-    folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "")
+    folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").strip()
+    if "/folders/" in folder_id:
+        import re
+        m = re.search(r"/folders/([a-zA-Z0-9_-]+)", folder_id)
+        if m:
+            folder_id = m.group(1)
     if not sa_json or not folder_id:
         print("Falta GOOGLE_SERVICE_ACCOUNT_JSON o GOOGLE_DRIVE_FOLDER_ID", file=sys.stderr)
         return 1
@@ -89,31 +94,20 @@ def main() -> int:
         return 0
     except urllib.error.HTTPError as e:
         body = e.read().decode()
-        print(f"Carpeta no accesible ({e.code}): {body[:300]}", file=sys.stderr)
-        if "404" not in body and "notFound" not in body:
-            return 1
-        print("Reintento en raíz de la cuenta de servicio (respaldo)...")
-        meta2 = json.dumps({"name": name, "mimeType": "text/plain"})
-        parts2 = (
-            f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{meta2}\r\n"
-            f"--{boundary}\r\nContent-Type: text/plain\r\n\r\n"
-        ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
-        req2 = urllib.request.Request(
-            url,
-            data=parts2,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": f"multipart/related; boundary={boundary}",
-            },
-            method="POST",
-        )
-        res2 = json.loads(urllib.request.urlopen(req2).read())
-        print(f"OK — respaldo en raíz SA id={res2.get('id')}")
-        print(
-            "::warning::Comparte la carpeta Drive con la cuenta de servicio (Editor) "
-            "o corrige GOOGLE_DRIVE_FOLDER_ID en GitHub Secrets.",
-        )
-        return 0
+        print(f"ERROR ({e.code}): {body[:500]}", file=sys.stderr)
+        if "storage quota" in body.lower() or e.code == 403:
+            print(
+                "Las cuentas de servicio NO pueden guardar en su Drive propio. "
+                "Debes compartir TU carpeta con la cuenta de servicio (Editor).",
+                file=sys.stderr,
+            )
+        if "404" in body or "notFound" in body:
+            print(
+                "Carpeta no encontrada: revisa GOOGLE_DRIVE_FOLDER_ID en GitHub Secrets "
+                "(solo el ID de la URL, o la URL completa).",
+                file=sys.stderr,
+            )
+        return 1
 
 
 if __name__ == "__main__":

@@ -3,6 +3,13 @@ type ServiceAccount = {
   private_key: string;
 };
 
+/** Acepta ID puro o URL completa de Drive. */
+export function normalizeFolderId(raw: string): string {
+  const trimmed = raw.trim().replace(/^["']|["']$/g, "");
+  const fromUrl = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  return fromUrl ? fromUrl[1] : trimmed;
+}
+
 function pemToArrayBuffer(pem: string): ArrayBuffer {
   const b64 = pem
     .replace(/-----BEGIN PRIVATE KEY-----/, "")
@@ -119,28 +126,13 @@ export async function uploadPdfToDrive(
 ): Promise<string> {
   const sa = JSON.parse(serviceAccountJson) as ServiceAccount;
   const token = await getAccessToken(sa);
+  const parentId = normalizeFolderId(folderId);
 
-  const withFolder = {
+  const metadata = {
     name: fileName,
-    parents: [folderId],
+    parents: [parentId],
     mimeType: "application/pdf",
   };
 
-  try {
-    return await uploadMultipart(pdfBytes, fileName, withFolder, token);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (!msg.includes("404") && !msg.includes("notFound")) throw e;
-    // Carpeta inexistente o sin compartir: respaldo en Drive de la cuenta de servicio
-    console.warn(
-      "Drive folder not found, uploading to service account root:",
-      folderId,
-    );
-    return await uploadMultipart(
-      pdfBytes,
-      fileName,
-      { name: fileName, mimeType: "application/pdf" },
-      token,
-    );
-  }
+  return await uploadMultipart(pdfBytes, fileName, metadata, token);
 }

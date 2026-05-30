@@ -62,13 +62,30 @@ jobs:
           [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ] || [ "$HTTP" = "422" ] || [ "$HTTP" = "400" ] || exit 1
           echo "Usuario supervisor listo"
 
+      - name: Validar formato GOOGLE_DRIVE_FOLDER_ID
+        env:
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          F="${GOOGLE_DRIVE_FOLDER_ID:-}"
+          if [ -z "$F" ]; then
+            echo "::error::GOOGLE_DRIVE_FOLDER_ID vacío en GitHub Secrets"
+            exit 1
+          fi
+          if echo "$F" | grep -qiE 'TU_ID|PLACEHOLDER|XXXX|pega|nombre-del-archivo'; then
+            echo "::error::GOOGLE_DRIVE_FOLDER_ID parece un placeholder. Pon el ID real de tu carpeta Drive."
+            exit 1
+          fi
+          echo "Secret de carpeta presente (longitud ${#F})"
+
       - name: Diagnóstico Google Drive (subida directa)
+        id: drive_diag
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: |
           chmod +x scripts/diagnose-drive.py
-          python3 scripts/diagnose-drive.py || echo "::warning::Diagnóstico Drive falló — revisar compartir carpeta con cuenta de servicio"
+          python3 scripts/diagnose-drive.py && echo "drive_ok=true" >> "$GITHUB_OUTPUT" || echo "drive_ok=false" >> "$GITHUB_OUTPUT"
 
       - name: Loop prueba y corrección (Drive + E2E)
         env:
@@ -82,7 +99,7 @@ jobs:
         run: |
           set -uo pipefail
           chmod +x scripts/e2e-full-cycle.sh
-          export ANON_KEY SERVICE_KEY SUPABASE_URL
+          export ANON_KEY SERVICE_KEY SUPABASE_URL SKIP_DRIVE_CHECK=1
           E2E_OK=1
 
           for attempt in 1 2 3; do
@@ -109,4 +126,13 @@ jobs:
               sleep 8
             fi
           done
-          exit "$E2E_OK"
+          if [ "$E2E_OK" -ne 0 ]; then
+            echo "::error::E2E núcleo falló tras 3 intentos"
+            exit 1
+          fi
+          echo "E2E núcleo (DB, login, retiro, PDF Storage, RLS) OK"
+          if [ "${{ steps.drive_diag.outputs.drive_ok }}" != "true" ]; then
+            echo "::error::Google Drive: carpeta no accesible. En GitHub Secrets pon el ID real de la carpeta y compártela con aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com (Editor). Ver docs/GOOGLE_DRIVE_SETUP.md"
+            exit 1
+          fi
+          echo "E2E completo incluyendo respaldo en Drive"
