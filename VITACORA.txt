@@ -369,3 +369,32 @@ Claves sin rotar hasta fin de proyecto (solicitud explícita).
 ================================================================================
 FIN ENTRADA #009
 ================================================================================
+
+================================================================================
+ENTRADA #010
+================================================================================
+Fecha: 2026-05-29
+Responsable: Agente Cursor
+Acción: PDF SERVER-SIDE + STORAGE + GOOGLE DRIVE (CONFIG EMPRESA FICTICIA)
+
+EMPRESA FICTICIA (system_settings.company)
+------------------------------------------
+- Aserradero Mestre S.A.C. · RUC 20123456789
+- Pucallpa, Ucayali, Perú · datos demo
+
+TÉCNICO
+-------
+- Edge Function: supabase/functions/generate-receipt (pdf-lib, SHA-256, Storage receipts/).
+- Copia opcional Google Drive si secrets GOOGLE_SERVICE_ACCOUNT_JSON + GOOGLE_DRIVE_FOLDER_ID.
+- Workflow: .github/workflows/supabase-functions.yml
+- Migración: 20260531100000_company_pdf_config.sql
+- Docs: docs/GOOGLE_DRIVE_SETUP.md
+- Kiosk: invoca generate-receipt tras retiro; enlace Descargar PDF.
+
+PENDIENTE USUARIO (solo para Drive de pruebas)
+----------------------------------------------
+Configurar secrets en Supabase según GOOGLE_DRIVE_SETUP.md (no en repo).
+
+================================================================================
+FIN ENTRADA #010
+================================================================================

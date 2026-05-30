@@ -7,11 +7,21 @@ type Employee = { id: string; employee_code: string; full_name: string };
 type Item = { id: string; sku: string; name: string; unit: string; current_qty: number };
 type CartLine = { item: Item; qty: number };
 
-type WithdrawalResult = {
+type RpcResult = {
   ok: boolean;
+  request_id: string;
   correlative: string;
   request_number: string;
   message: string;
+};
+
+type WithdrawalResult = {
+  correlative: string;
+  request_number: string;
+  message: string;
+  pdf_url: string | null;
+  sync_status: string;
+  drive_synced: boolean;
 };
 
 export function WithdrawalKiosk() {
@@ -128,17 +138,45 @@ export function WithdrawalKiosk() {
       return;
     }
 
-    const payload = data as WithdrawalResult & { ok?: boolean };
-    if (!payload?.ok) {
+    const payload = data as RpcResult;
+    if (!payload?.ok || !payload.request_id) {
       setError("No se pudo completar la entrega.");
       return;
     }
 
+    let pdfUrl: string | null = null;
+    let syncStatus = "PENDING";
+
+    const { data: pdfData, error: fnError } = await supabase.functions.invoke(
+      "generate-receipt",
+      { body: { request_id: payload.request_id } },
+    );
+
+    if (!fnError && pdfData) {
+      const pdf = pdfData as {
+        pdf_url?: string;
+        sync_status?: string;
+        error?: string;
+      };
+      if (pdf.error) {
+        setError(`Entrega OK. PDF: ${pdf.error}`);
+      } else {
+        pdfUrl = pdf.pdf_url ?? null;
+        syncStatus = pdf.sync_status ?? "PENDING";
+      }
+    } else if (fnError) {
+      setError(
+        `Entrega registrada. PDF pendiente (despliega Edge Function generate-receipt): ${fnError.message}`,
+      );
+    }
+
     setResult({
-      ok: true,
       correlative: payload.correlative,
       request_number: payload.request_number,
       message: payload.message ?? "Entrega registrada.",
+      pdf_url: pdfUrl,
+      sync_status: syncStatus,
+      drive_synced: syncStatus === "SYNCED",
     });
     setCart([]);
     await load();
@@ -156,6 +194,24 @@ export function WithdrawalKiosk() {
         </p>
         <p>
           <strong>Solicitud:</strong> {result.request_number}
+        </p>
+        <p>
+          <strong>PDF:</strong>{" "}
+          {result.pdf_url ? (
+            <a href={result.pdf_url} target="_blank" rel="noreferrer">
+              Descargar comprobante
+            </a>
+          ) : (
+            "Generando o pendiente de despliegue"
+          )}
+        </p>
+        <p className="muted small">
+          Copia en Google Drive:{" "}
+          {result.drive_synced
+            ? "Sincronizado"
+            : result.sync_status === "FAILED"
+              ? "Error (revisar secrets Drive)"
+              : "Solo Supabase Storage (configura Drive en docs/GOOGLE_DRIVE_SETUP.md)"}
         </p>
         <button
           type="button"

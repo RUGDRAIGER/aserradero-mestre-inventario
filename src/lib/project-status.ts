@@ -61,8 +61,8 @@ export const PROJECT_MODULES: ProjectModule[] = [
   {
     id: "pdf",
     name: "Comprobantes PDF",
-    description: "Correlativo asignado; PDF server-side pendiente.",
-    status: "in_progress",
+    description: "Edge Function generate-receipt + Storage; Drive opcional.",
+    status: "done",
     updatedAt: "2026-05-29",
   },
   {
@@ -74,4 +74,4 @@ export const PROJECT_MODULES: ProjectModule[] = [
   },
 ];
 
-export const PROJECT_VERSION = "0.4.0";
+export const PROJECT_VERSION = "0.5.0";
