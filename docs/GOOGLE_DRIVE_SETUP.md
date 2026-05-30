@@ -21,16 +21,46 @@ Detectado en tu consola Google Cloud:
 
 ---
 
-## Paso 2 — Carpeta en Drive y compartir
+## Paso 2 — Carpeta en Drive (tu carpeta `aserraderos:mestre`)
 
-1. En Google Drive crea o abre la carpeta de pruebas.
-2. Copia el **ID de la carpeta** de la URL (ejemplo del proyecto):  
-   `https://drive.google.com/drive/folders/1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx` → ID: `1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx`
-3. **Compartir** la carpeta con:  
-   `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com`  
-   Rol: **Editor** (no uses “Lector”; con Lector la carpeta se ve pero no se pueden subir PDFs).
+1. Abre la carpeta **aserraderos:mestre** en [Google Drive](https://drive.google.com).
+2. Copia el **ID** de la barra de direcciones: `https://drive.google.com/drive/folders/XXXXXXXX`.
+3. Comparte con `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com` como **Editor** (ya lo hiciste).
 
-Si el ID de carpeta es incorrecto o no está compartida, la app **igual guarda el PDF** en el Drive de la cuenta de servicio (respaldo automático). Para ver los archivos en *tu* carpeta, el ID debe ser válido y la carpeta compartida.
+### Importante (Gmail personal / «Mi unidad»)
+
+Google **no permite** que la cuenta de servicio suba archivos a carpetas de **Mi unidad**, aunque tengas Editor. El mensaje es: *«Service Accounts do not have storage quota»*.
+
+Tienes **dos opciones**:
+
+| Opción | Para quién |
+|--------|------------|
+| **A — OAuth de tu cuenta** (recomendado con Gmail) | `project.manager.rug@gmail.com` |
+| **B — Unidad compartida** | Google Workspace con menú «Unidades compartidas» |
+
+#### Opción A — OAuth (5 minutos)
+
+1. Google Cloud → **APIs y servicios** → **Credenciales** → **Crear credenciales** → **ID de cliente de OAuth** → tipo **App de escritorio**.
+2. En el cliente OAuth, agrega URI de redirección: `http://localhost:8765/`
+3. En tu Mac:
+
+```bash
+export GOOGLE_OAUTH_CLIENT_ID="TU_CLIENT_ID.apps.googleusercontent.com"
+export GOOGLE_OAUTH_CLIENT_SECRET="GOCSPX-..."
+python3 scripts/google-oauth-refresh-token.py
+```
+
+4. Guarda el refresh token en GitHub Secrets:
+
+```bash
+gh secret set GOOGLE_OAUTH_CLIENT_ID --repo RUGDRAIGER/aserradero-mestre-inventario --body "..."
+gh secret set GOOGLE_OAUTH_CLIENT_SECRET --repo RUGDRAIGER/aserradero-mestre-inventario --body "..."
+gh secret set GOOGLE_OAUTH_REFRESH_TOKEN --repo RUGDRAIGER/aserradero-mestre-inventario --body "..."
+```
+
+5. **Actions → Sincronizar secrets Drive a Supabase** → Run workflow.
+
+La función usará tu cuenta para subir el PDF a `aserraderos:mestre`.
 
 **Error 404 "File not found"** en pruebas → el ID del secret no coincide con una carpeta accesible. Solución:
 

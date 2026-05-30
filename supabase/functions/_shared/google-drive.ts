@@ -84,9 +84,14 @@ function driveErrorMessage(status: number, body: string, saEmail: string): strin
     );
   }
   if (status === 403) {
-    if (body.includes("storageQuota") || body.includes("storage quota")) {
+    if (
+      body.includes("storageQuota") ||
+      body.includes("storage quota") ||
+      body.includes("Service Accounts do not have storage quota")
+    ) {
       return (
-        `La cuenta de servicio no puede guardar en su Drive propio. Comparte TU carpeta con ${saEmail} (Editor).`
+        "Google no permite subir a carpetas de «Mi unidad» con cuenta de servicio (aunque seas Editor). " +
+        "Usa una Unidad compartida (Workspace) o configura GOOGLE_OAUTH_REFRESH_TOKEN (ver docs/GOOGLE_DRIVE_SETUP.md)."
       );
     }
     return (
@@ -161,12 +166,40 @@ async function resolveParentFolder(
   throw new Error(driveErrorMessage(404, "notFound", saEmail));
 }
 
+async function getUserAccessTokenFromRefresh(): Promise<string | null> {
+  const clientId = Deno.env.get("GOOGLE_OAUTH_CLIENT_ID")?.trim();
+  const clientSecret = Deno.env.get("GOOGLE_OAUTH_CLIENT_SECRET")?.trim();
+  const refresh = Deno.env.get("GOOGLE_OAUTH_REFRESH_TOKEN")?.trim();
+  if (!clientId || !clientSecret || !refresh) return null;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refresh,
+      grant_type: "refresh_token",
+    }),
+  });
+  if (!res.ok) {
+    console.error("OAuth refresh error:", await res.text());
+    return null;
+  }
+  const json = await res.json();
+  return json.access_token as string;
+}
+
+function isStorageQuotaError(message: string): boolean {
+  return /storage quota|storageQuota|do not have storage quota/i.test(message);
+}
+
 async function uploadMultipart(
   pdfBytes: Uint8Array,
   fileName: string,
   metadata: Record<string, unknown>,
   token: string,
-  saEmail: string,
+  errorContext: string,
 ): Promise<string> {
   const boundary = "-------supabasePdfBoundary";
   const bodyParts = [
@@ -200,7 +233,7 @@ async function uploadMultipart(
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(driveErrorMessage(res.status, body, saEmail));
+    throw new Error(driveErrorMessage(res.status, body, errorContext));
   }
   const json = await res.json();
   return json.id as string;
@@ -222,5 +255,16 @@ export async function uploadPdfToDrive(
     mimeType: "application/pdf",
   };
 
-  return await uploadMultipart(pdfBytes, fileName, metadata, token, sa.client_email);
+  try {
+    return await uploadMultipart(pdfBytes, fileName, metadata, token, sa.client_email);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!isStorageQuotaError(msg)) throw e;
+
+    const userToken = await getUserAccessTokenFromRefresh();
+    if (!userToken) throw e;
+
+    console.log("Drive: reintento con OAuth del propietario (Mi unidad)");
+    return await uploadMultipart(pdfBytes, fileName, metadata, userToken, sa.client_email);
+  }
 }
