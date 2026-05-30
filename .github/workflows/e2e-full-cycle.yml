@@ -1,0 +1,99 @@
+name: Prueba E2E ciclo completo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/e2e-full-cycle.sh"
+      - ".github/workflows/e2e-full-cycle.yml"
+      - "supabase/**"
+      - "src/**"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: https://qshvtyzedbghgsbpzzcn.supabase.co
+      DEMO_EMAIL: supervisor@aserradero-mestre.demo
+      DEMO_PASSWORD: MestreSuper2026!
+      PROJECT_REF: qshvtyzedbghgsbpzzcn
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependencias de verificación
+        run: pip install --quiet cryptography
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Obtener API keys
+        id: keys
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          RESP=$(curl -sS -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/api-keys?reveal=true")
+          ANON=$(echo "$RESP" | jq -r '
+            [.[] | select(.name == "anon" or .type == "publishable") | .api_key] | first // empty
+          ')
+          SERVICE=$(echo "$RESP" | jq -r '
+            [.[] | select(.name == "service_role" or .type == "service_role" or .type == "secret") | .api_key] | first // empty
+          ')
+          [ -n "$ANON" ] && [ -n "$SERVICE" ] || (echo "$RESP" | jq 'map({name,type})'; exit 1)
+          echo "::add-mask::${ANON}"
+          echo "::add-mask::${SERVICE}"
+          echo "anon=${ANON}" >> "$GITHUB_OUTPUT"
+          echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
+
+      - name: Asegurar usuario supervisor demo
+        env:
+          SERVICE_KEY: ${{ steps.keys.outputs.service }}
+        run: |
+          set -euo pipefail
+          BODY=$(jq -n --arg e "$DEMO_EMAIL" --arg p "$DEMO_PASSWORD" \
+            '{email:$e,password:$p,email_confirm:true}')
+          HTTP=$(curl -sS -o /tmp/u.json -w "%{http_code}" \
+            -X POST "${SUPABASE_URL}/auth/v1/admin/users" \
+            -H "Authorization: Bearer ${SERVICE_KEY}" -H "apikey: ${SERVICE_KEY}" \
+            -H "Content-Type: application/json" -d "$BODY")
+          [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ] || [ "$HTTP" = "422" ] || [ "$HTTP" = "400" ] || exit 1
+          echo "Usuario supervisor listo"
+
+      - name: Loop prueba y corrección (Drive + E2E)
+        env:
+          ANON_KEY: ${{ steps.keys.outputs.anon }}
+          SERVICE_KEY: ${{ steps.keys.outputs.service }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/e2e-full-cycle.sh
+          export ANON_KEY SERVICE_KEY SUPABASE_URL
+
+          for attempt in 1 2 3; do
+            echo "--- Intento E2E $attempt/3 ---"
+            if scripts/e2e-full-cycle.sh; then
+              echo "E2E exitoso en intento $attempt"
+              exit 0
+            fi
+            echo "::warning::E2E falló en intento $attempt"
+            if [ "$attempt" -lt 3 ]; then
+              echo "Sincronizando Drive secrets y redesplegando función..."
+              COMPACT_JSON=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -c .)
+              printf 'GOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_SERVICE_ACCOUNT_JSON=%s\n' \
+                "$GOOGLE_DRIVE_FOLDER_ID" "$COMPACT_JSON" > /tmp/supabase-secrets.env
+              supabase secrets set --project-ref qshvtyzedbghgsbpzzcn --env-file /tmp/supabase-secrets.env
+              rm -f /tmp/supabase-secrets.env
+              supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD"
+              supabase functions deploy generate-receipt --no-verify-jwt
+              sleep 8
+            fi
+          done
+          echo "::error::E2E falló tras 3 intentos"
+          exit 1

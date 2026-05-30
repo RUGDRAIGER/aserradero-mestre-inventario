@@ -107,11 +107,11 @@ Deno.serve(async (req) => {
       .single();
 
     const company = (companyRow?.value ?? {}) as Company;
-    const emp = withdrawal.employees as {
-      employee_code: string;
-      full_name: string;
-      department: string;
-    } | null;
+    const empRaw = withdrawal.employees as
+      | { employee_code: string; full_name: string; department: string }
+      | { employee_code: string; full_name: string; department: string }[]
+      | null;
+    const emp = Array.isArray(empRaw) ? empRaw[0] ?? null : empRaw;
 
     const pdf = await PDFDocument.create();
     const font = await pdf.embedFont(StandardFonts.Helvetica);

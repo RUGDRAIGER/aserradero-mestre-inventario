@@ -26,9 +26,12 @@ if [ -z "$FOLDER_ID" ]; then
   exit 1
 fi
 
+COMPACT_JSON=$(jq -c . < "$JSON_FILE")
+printf 'GOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_SERVICE_ACCOUNT_JSON=%s\n' \
+  "$FOLDER_ID" "$COMPACT_JSON" > /tmp/supabase-secrets.env
 npx --yes supabase@latest secrets set \
   --project-ref "$PROJECT_REF" \
-  "GOOGLE_SERVICE_ACCOUNT_JSON=$(cat "$JSON_FILE")" \
-  "GOOGLE_DRIVE_FOLDER_ID=$FOLDER_ID"
+  --env-file /tmp/supabase-secrets.env
+rm -f /tmp/supabase-secrets.env
 
 echo "Secrets configurados en Supabase. Redespliega: Actions → Desplegar Edge Functions"
