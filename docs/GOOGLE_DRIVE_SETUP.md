@@ -1,53 +1,76 @@
-# Google Drive — carpeta de pruebas para comprobantes PDF
+# Google Drive — configuración para tu proyecto
 
-El PDF siempre se guarda en **Supabase Storage** (`receipts`).  
-Google Drive es una **copia adicional** cuando configuras los secrets en Supabase.
+Detectado en tu consola Google Cloud:
 
-## Pasos (una sola vez)
+| Dato | Valor |
+|------|--------|
+| Proyecto GCP | `proyecto-de-prueba-497903` |
+| Cuenta de servicio | `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com` |
+| Google Drive API | Debe estar habilitada (Biblioteca → Google Drive API) |
 
-### 1. Google Cloud Console
+**No uses “Clave de API”** para subir PDFs. Necesitas la **clave JSON de la cuenta de servicio**.
 
-1. https://console.cloud.google.com/ → crea o abre un proyecto de prueba.
-2. **APIs & Services** → **Library** → activa **Google Drive API**.
+---
 
-### 2. Cuenta de servicio
+## Paso 1 — Descargar clave JSON (en Google Cloud)
 
-1. **APIs & Services** → **Credentials** → **Create credentials** → **Service account**.
-2. Nombre: `aserradero-mestre-pdf` → **Create**.
-3. En la cuenta → pestaña **Keys** → **Add key** → **JSON** → descarga el archivo.
+1. https://console.cloud.google.com/iam-admin/serviceaccounts?project=proyecto-de-prueba-497903
+2. Clic en **aserradero-mestre-pdf**
+3. Pestaña **Claves** → **Agregar clave** → **Crear clave nueva** → tipo **JSON** → **Crear**
+4. Se descarga un archivo `.json` en tu PC (no lo subas al repo ni al chat).
 
-### 3. Carpeta en tu Google Drive de pruebas
+---
 
-1. En Drive crea una carpeta, ej. `Comprobantes Aserradero Mestre`.
-2. Abre la carpeta → copia el **ID** de la URL:  
-   `https://drive.google.com/drive/folders/ESTE_ES_EL_ID`
-3. Clic derecho en la carpeta → **Compartir**.
-4. Pega el email de la cuenta de servicio (del JSON, campo `client_email`, tipo `xxx@xxx.iam.gserviceaccount.com`).
-5. Rol: **Editor** → **Compartir**.
+## Paso 2 — Carpeta en Drive y compartir
 
-### 4. Secrets en Supabase (Edge Functions)
+1. En Google Drive crea o abre la carpeta de pruebas.
+2. Copia el **ID de la carpeta** de la URL:  
+   `https://drive.google.com/drive/folders/XXXXXXXX`
+3. **Compartir** la carpeta con:  
+   `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com`  
+   Rol: **Editor**.
 
-1. https://supabase.com/dashboard/project/qshvtyzedbghgsbpzzcn/settings/functions
-2. O en terminal (con access token):  
-   `supabase secrets set --project-ref qshvtyzedbghgsbpzzcn`
+---
+
+## Paso 3 — Secrets en Supabase (solo tú, en el panel)
+
+https://supabase.com/dashboard/project/qshvtyzedbghgsbpzzcn/settings/functions
 
 | Secret | Valor |
 |--------|--------|
-| `GOOGLE_DRIVE_FOLDER_ID` | ID de la carpeta del paso 3 |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Contenido **completo** del archivo JSON (una sola línea o multilínea) |
+| `GOOGLE_DRIVE_FOLDER_ID` | El ID del paso 2 |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Abre el `.json` descargado, copia **todo** el contenido |
 
-**No subas el JSON al repositorio ni al chat.**
+Guarda cada secret.
 
-### 5. Redesplegar la función
+---
 
-Tras guardar secrets, en GitHub **Actions** → **Desplegar Edge Functions** → **Run workflow**  
-(o push a `supabase/functions/`).
+## Paso 4 — Redesplegar función
 
-## Comprobar
+GitHub → **Actions** → **Desplegar Edge Functions** → **Run workflow**
 
-1. Haz un retiro en `/retiro/`.
-2. El comprobante debe mostrar enlace **Descargar PDF**.
-3. En Drive debe aparecer `MESTRE-2026-XXXXXXX.pdf` en tu carpeta.
-4. En Supabase **Storage** → `receipts` → año/mes → mismo archivo.
+O espera un push a `supabase/functions/`.
 
-Si Drive falla, el PDF igual queda en Storage y `sync_status` = `FAILED`.
+---
+
+## Probar
+
+1. https://rugdraiger.github.io/aserradero-mestre-inventario/retiro/
+2. Haz un retiro de prueba.
+3. Debe aparecer **Descargar comprobante** y en Drive el PDF `MESTRE-2026-XXXXXXX.pdf`.
+
+Si Drive falla, el PDF igual queda en Supabase → **Storage** → bucket `receipts`.
+
+---
+
+## Si prefieres pasarme credenciales
+
+**No pegues el JSON en el chat.**  
+Solo configura los dos secrets en Supabase y escribe: **“Drive configurado”** + el **ID de carpeta** (no es secreto).
+
+Si quieres que yo los suba vía CLI, puedes añadir el JSON como secret en **GitHub** (repo privado):
+
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `GOOGLE_DRIVE_FOLDER_ID`
+
+y avisarme; montaré un paso en Actions para pasarlos a Supabase (opcional).
