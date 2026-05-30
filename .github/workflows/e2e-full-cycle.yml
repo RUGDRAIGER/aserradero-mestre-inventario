@@ -62,6 +62,8 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           supabase functions deploy generate-receipt --no-verify-jwt
+          echo "Esperando propagación de Edge Functions..."
+          sleep 20
 
       - name: Asegurar usuario supervisor demo
         env:
