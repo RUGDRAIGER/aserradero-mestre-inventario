@@ -66,17 +66,28 @@ def main() -> int:
     token = json.loads(tok_res.read())["access_token"]
     print("Token OAuth OK")
 
-    def folder_ok(fid: str, tok: str) -> bool:
-        u = f"https://www.googleapis.com/drive/v3/files/{fid}?fields=id,mimeType&supportsAllDrives=true"
+    def folder_ok(fid: str, tok: str) -> tuple[bool, str]:
+        u = (
+            f"https://www.googleapis.com/drive/v3/files/{fid}"
+            "?fields=id,mimeType,capabilities/canAddChildren&supportsAllDrives=true"
+        )
         try:
             meta = json.loads(
                 urllib.request.urlopen(
                     urllib.request.Request(u, headers={"Authorization": f"Bearer {tok}"})
                 ).read()
             )
-            return meta.get("mimeType") == "application/vnd.google-apps.folder"
+            if meta.get("mimeType") != "application/vnd.google-apps.folder":
+                return False, "El ID no es una carpeta."
+            caps = meta.get("capabilities") or {}
+            if caps.get("canAddChildren") is False:
+                return False, (
+                    f"La carpeta existe pero sin permiso de escritura. "
+                    f"Comparte con {email} como Editor (no Lector)."
+                )
+            return True, ""
         except urllib.error.HTTPError:
-            return False
+            return False, "Carpeta no encontrada o sin compartir."
 
     def shared_folders(tok: str) -> list:
         q = urllib.parse.quote(
@@ -94,20 +105,20 @@ def main() -> int:
         return data.get("files", [])
 
     parent = folder_id
-    if not folder_ok(parent, token):
+    ok_folder, reason = folder_ok(parent, token)
+    if not ok_folder:
         shared = shared_folders(token)
         if shared:
             parent = shared[0]["id"]
-            print(
-                f"AVISO: ID del secret no accesible; usando carpeta compartida "
-                f"«{shared[0].get('name')}» ({parent})",
-                file=sys.stderr,
-            )
-        else:
-            print(
-                f"Ninguna carpeta accesible. Comparte una carpeta con {email} como Editor.",
-                file=sys.stderr,
-            )
+            ok_folder, reason = folder_ok(parent, token)
+            if ok_folder:
+                print(
+                    f"AVISO: carpeta del secret sin escritura; usando "
+                    f"«{shared[0].get('name')}» ({parent})",
+                    file=sys.stderr,
+                )
+        if not ok_folder:
+            print(reason or f"Ninguna carpeta con permiso Editor para {email}.", file=sys.stderr)
             return 1
 
     print(f"Carpeta destino verificada: {parent}")

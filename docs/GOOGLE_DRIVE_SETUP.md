@@ -28,7 +28,7 @@ Detectado en tu consola Google Cloud:
    `https://drive.google.com/drive/folders/1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx` → ID: `1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx`
 3. **Compartir** la carpeta con:  
    `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com`  
-   Rol: **Editor**.
+   Rol: **Editor** (no uses “Lector”; con Lector la carpeta se ve pero no se pueden subir PDFs).
 
 Si el ID de carpeta es incorrecto o no está compartida, la app **igual guarda el PDF** en el Drive de la cuenta de servicio (respaldo automático). Para ver los archivos en *tu* carpeta, el ID debe ser válido y la carpeta compartida.
 

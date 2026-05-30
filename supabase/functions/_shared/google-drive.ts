@@ -83,22 +83,28 @@ function driveErrorMessage(status: number, body: string, saEmail: string): strin
       `y actualiza GOOGLE_DRIVE_FOLDER_ID (ID de la URL .../folders/XXXX).`
     );
   }
-  if (status === 403 && (body.includes("storageQuota") || body.includes("storage quota"))) {
+  if (status === 403) {
+    if (body.includes("storageQuota") || body.includes("storage quota")) {
+      return (
+        `La cuenta de servicio no puede guardar en su Drive propio. Comparte TU carpeta con ${saEmail} (Editor).`
+      );
+    }
     return (
-      `La cuenta de servicio no puede guardar en su Drive propio. Comparte TU carpeta con ${saEmail} (Editor).`
+      `Sin permiso de escritura en la carpeta. En Drive → Compartir → ${saEmail} debe ser Editor, no Lector.`
     );
   }
   return `Drive (${status}): ${body.slice(0, 280)}`;
 }
 
-async function folderExists(folderId: string, token: string): Promise<boolean> {
+async function folderWritable(folderId: string, token: string): Promise<boolean> {
   const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,mimeType&supportsAllDrives=true`,
+    `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,mimeType,capabilities&supportsAllDrives=true`,
     { headers: { Authorization: `Bearer ${token}` } },
   );
   if (!res.ok) return false;
   const meta = await res.json();
-  return meta.mimeType === "application/vnd.google-apps.folder";
+  if (meta.mimeType !== "application/vnd.google-apps.folder") return false;
+  return meta.capabilities?.canAddChildren !== false;
 }
 
 /** Carpetas compartidas con la cuenta de servicio (cuando el ID del secret es incorrecto). */
@@ -125,7 +131,7 @@ async function resolveParentFolder(
   saEmail: string,
 ): Promise<string> {
   const parentId = normalizeFolderId(folderId);
-  if (await folderExists(parentId, token)) return parentId;
+  if (await folderWritable(parentId, token)) return parentId;
 
   const shared = await findSharedFolder(token, parentId);
   if (shared) {
