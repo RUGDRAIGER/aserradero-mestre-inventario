@@ -69,20 +69,12 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
   return json.access_token as string;
 }
 
-export async function uploadPdfToDrive(
+async function uploadMultipart(
   pdfBytes: Uint8Array,
   fileName: string,
-  folderId: string,
-  serviceAccountJson: string,
+  metadata: Record<string, unknown>,
+  token: string,
 ): Promise<string> {
-  const sa = JSON.parse(serviceAccountJson) as ServiceAccount;
-  const token = await getAccessToken(sa);
-
-  const metadata = {
-    name: fileName,
-    parents: [folderId],
-    mimeType: "application/pdf",
-  };
 
   const boundary = "-------supabasePdfBoundary";
   const bodyParts = [
@@ -117,4 +109,38 @@ export async function uploadPdfToDrive(
   if (!res.ok) throw new Error(`Drive upload error: ${await res.text()}`);
   const json = await res.json();
   return json.id as string;
+}
+
+export async function uploadPdfToDrive(
+  pdfBytes: Uint8Array,
+  fileName: string,
+  folderId: string,
+  serviceAccountJson: string,
+): Promise<string> {
+  const sa = JSON.parse(serviceAccountJson) as ServiceAccount;
+  const token = await getAccessToken(sa);
+
+  const withFolder = {
+    name: fileName,
+    parents: [folderId],
+    mimeType: "application/pdf",
+  };
+
+  try {
+    return await uploadMultipart(pdfBytes, fileName, withFolder, token);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!msg.includes("404") && !msg.includes("notFound")) throw e;
+    // Carpeta inexistente o sin compartir: respaldo en Drive de la cuenta de servicio
+    console.warn(
+      "Drive folder not found, uploading to service account root:",
+      folderId,
+    );
+    return await uploadMultipart(
+      pdfBytes,
+      fileName,
+      { name: fileName, mimeType: "application/pdf" },
+      token,
+    );
+  }
 }

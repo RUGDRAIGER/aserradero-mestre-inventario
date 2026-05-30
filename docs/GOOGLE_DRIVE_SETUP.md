@@ -30,6 +30,10 @@ Detectado en tu consola Google Cloud:
    `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com`  
    Rol: **Editor**.
 
+Si el ID de carpeta es incorrecto o no está compartida, la app **igual guarda el PDF** en el Drive de la cuenta de servicio (respaldo automático). Para ver los archivos en *tu* carpeta, el ID debe ser válido y la carpeta compartida.
+
+**Error 404 "File not found"** en pruebas → revisa `GOOGLE_DRIVE_FOLDER_ID` en GitHub Secrets (debe ser el ID real de la URL de Drive, no un placeholder).
+
 ---
 
 ## Paso 3 — Secrets en Supabase (solo tú, en el panel)

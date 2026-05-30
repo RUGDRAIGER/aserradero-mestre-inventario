@@ -101,14 +101,14 @@ ok "receipt_documents: sync=$DB_SYNC path=$(echo "$REC" | jq -r '.[0].storage_pa
 if [ -n "$GOOGLE_SERVICE_ACCOUNT_JSON" ] && [ -n "$GOOGLE_DRIVE_FOLDER_ID" ]; then
   if [ "$DB_SYNC" != "SYNCED" ] || [ -z "$DB_DRIVE" ]; then
     echo "::warning::Drive sync=$DB_SYNC file_id=$DB_DRIVE (respuesta función: sync=$SYNC drive=$DRIVE_ID)"
-    fail "Drive no sincronizado. Comparte la carpeta Drive con la cuenta de servicio (Editor) y ejecuta Sincronizar secrets Drive."
+    fail "Drive no sincronizado. Revisa secrets y comparte la carpeta con la cuenta de servicio (o usa respaldo en raíz SA)."
   fi
-  # Verificar archivo en carpeta Drive vía API
+  # Verificar archivo en Drive (carpeta o raíz de cuenta de servicio)
   SA_EMAIL=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -r '.client_email')
   NOW=$(date +%s)
   EXP=$((NOW + 3600))
   # Token vía script inline Python o node - usar openssl+jwt es pesado; jq + curl con python3
-  DRIVE_CHECK=$(python3 - "$GOOGLE_SERVICE_ACCOUNT_JSON" "$GOOGLE_DRIVE_FOLDER_ID" "$CORRELATIVE.pdf" <<'PY'
+  DRIVE_CHECK=$(python3 - "$GOOGLE_SERVICE_ACCOUNT_JSON" "$GOOGLE_DRIVE_FOLDER_ID" "$CORRELATIVE.pdf" "$DB_DRIVE" <<'PY'
 import sys, json, time, base64, urllib.request, urllib.parse
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -116,6 +116,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 sa = json.loads(sys.argv[1])
 folder = sys.argv[2]
 want = sys.argv[3]
+file_id = sys.argv[4]
 
 def b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
@@ -139,11 +140,18 @@ tok = json.loads(urllib.request.urlopen(urllib.request.Request(
     "https://oauth2.googleapis.com/token", data=body,
     headers={"Content-Type": "application/x-www-form-urlencoded"},
 )).read())["access_token"]
-q = urllib.parse.quote(f"'{folder}' in parents and name = '{want}'")
-url = f"https://www.googleapis.com/drive/v3/files?q={q}&fields=files(id,name)"
+# Por id (más fiable tras respaldo en raíz SA)
+url = f"https://www.googleapis.com/drive/v3/files/{file_id}?fields=id,name"
 req = urllib.request.Request(url, headers={"Authorization": f"Bearer {tok}"})
-files = json.loads(urllib.request.urlopen(req).read()).get("files", [])
-print(json.dumps({"found": len(files) > 0, "files": files}))
+try:
+    meta = json.loads(urllib.request.urlopen(req).read())
+    print(json.dumps({"found": True, "files": [meta]}))
+except Exception:
+    q = urllib.parse.quote(f"'{folder}' in parents and name = '{want}'")
+    url = f"https://www.googleapis.com/drive/v3/files?q={q}&fields=files(id,name)"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {tok}"})
+    files = json.loads(urllib.request.urlopen(req).read()).get("files", [])
+    print(json.dumps({"found": len(files) > 0, "files": files}))
 PY
   ) 2>/dev/null || DRIVE_CHECK='{"found":false,"skip":"python3/cryptography no disponible"}'
 

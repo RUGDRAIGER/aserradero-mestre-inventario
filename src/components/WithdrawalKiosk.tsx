@@ -208,7 +208,7 @@ export function WithdrawalKiosk() {
         <p className="muted small">
           Copia en Google Drive:{" "}
           {result.drive_synced
-            ? "Sincronizado"
+            ? "Sincronizado (carpeta o respaldo en cuenta de servicio)"
             : result.sync_status === "FAILED"
               ? "Error (revisar secrets Drive)"
               : "Solo Supabase Storage (configura Drive en docs/GOOGLE_DRIVE_SETUP.md)"}
