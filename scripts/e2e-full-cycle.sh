@@ -22,6 +22,52 @@ api() {
   curl "${args[@]}"
 }
 
+# PostgREST: apikey siempre es anon/service; el JWT de usuario va solo en Authorization.
+api_user() {
+  local method="$1" path="$2" access="$3" body="${4:-}"
+  local args=(-sS -X "$method" "${SUPABASE_URL}${path}" -H "apikey: ${ANON_KEY}" -H "Authorization: Bearer ${access}")
+  [ -n "$body" ] && args+=(-H "Content-Type: application/json" -d "$body")
+  curl "${args[@]}"
+}
+
+invoke_generate_receipt() {
+  local body="$1"
+  local resp
+  for mode in anon service none; do
+    case "$mode" in
+      anon)
+        resp=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
+          -H "apikey: ${ANON_KEY}" -H "Authorization: Bearer ${ANON_KEY}" \
+          -H "Content-Type: application/json" -d "$body" 2>/dev/null || echo '{}')
+        ;;
+      service)
+        resp=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
+          -H "apikey: ${SERVICE_KEY}" -H "Authorization: Bearer ${SERVICE_KEY}" \
+          -H "Content-Type: application/json" -d "$body" 2>/dev/null || echo '{}')
+        ;;
+      none)
+        resp=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
+          -H "apikey: ${ANON_KEY}" -H "Content-Type: application/json" -d "$body" 2>/dev/null || echo '{}')
+        ;;
+    esac
+    if echo "$resp" | jq -e '.ok == true' >/dev/null 2>&1; then
+      echo "$resp"
+      return 0
+    fi
+    if ! echo "$resp" | jq -e '.code == "NOT_FOUND"' >/dev/null 2>&1; then
+      echo "$resp"
+      return 0
+    fi
+  done
+  if command -v supabase >/dev/null 2>&1 && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+    resp=$(supabase functions invoke generate-receipt --project-ref qshvtyzedbghgsbpzzcn \
+      --no-verify-jwt --body "$body" 2>/dev/null || echo '{}')
+    echo "$resp"
+    return 0
+  fi
+  echo "$resp"
+}
+
 if [ -z "$ANON_KEY" ]; then fail "Falta ANON_KEY"; fi
 if [ -z "$SERVICE_KEY" ]; then fail "Falta SERVICE_KEY"; fi
 
@@ -77,11 +123,9 @@ MOV=$(api GET "/rest/v1/inventory_movements?order=created_at.desc&limit=1&select
 echo "$MOV" | jq -e '.[0].movement_type == "SALIDA_ENTREGA"' >/dev/null || fail "Último movimiento no es SALIDA_ENTREGA"
 ok "Movimiento SALIDA_ENTREGA en DB"
 
-# 5. Generar PDF (Edge Function — HTTP; en CI a veces no enruta, se valida DB abajo)
+# 5. Generar PDF (Edge Function)
 BODY=$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')
-PDF=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
-  -H "apikey: ${ANON_KEY}" -H "Authorization: Bearer ${ANON_KEY}" \
-  -H "Content-Type: application/json" -d "$BODY" || echo '{}')
+PDF=$(invoke_generate_receipt "$BODY")
 PDF_OK=false
 if echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
   PDF_OK=true
@@ -198,11 +242,15 @@ fi
 # 8. Panel supervisor (RLS autenticado)
 SVC_W=$(api GET "/rest/v1/withdrawal_requests?id=eq.${REQUEST_ID}&select=id,status" "$SERVICE_KEY")
 echo "$SVC_W" | jq -e '.[0].id' >/dev/null || fail "withdrawal_requests no existe en DB"
-AUTH_W=$(api GET "/rest/v1/withdrawal_requests?id=eq.${REQUEST_ID}&select=id,status" "$ACCESS")
+AUTH_W=$(api_user GET "/rest/v1/withdrawal_requests?id=eq.${REQUEST_ID}&select=id,status" "$ACCESS")
 if ! echo "$AUTH_W" | jq -e '.[0].id' >/dev/null 2>&1; then
-  echo "::warning::RLS: supervisor autenticado no lee withdrawal_requests (datos sí existen con service_role)"
+  fail "RLS: supervisor autenticado no lee withdrawal_requests (respuesta: $(echo "$AUTH_W" | head -c 120))"
 else
   ok "RLS supervisor: lectura withdrawal_requests"
 fi
+
+AUTH_R=$(api_user GET "/rest/v1/receipt_documents?request_id=eq.${REQUEST_ID}&select=correlative" "$ACCESS")
+echo "$AUTH_R" | jq -e '.[0].correlative' >/dev/null || fail "RLS: supervisor no lee receipt_documents"
+ok "RLS supervisor: lectura receipt_documents"
 
 echo "=== E2E COMPLETO OK ==="

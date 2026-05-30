@@ -66,6 +66,11 @@ jobs:
           supabase functions list --project-ref qshvtyzedbghgsbpzzcn || true
           echo "Esperando propagación de Edge Functions..."
           sleep 25
+          echo "Verificando invocación generate-receipt..."
+          supabase functions invoke generate-receipt --project-ref qshvtyzedbghgsbpzzcn \
+            --no-verify-jwt \
+            --body '{"request_id":"00000000-0000-0000-0000-000000000000"}' \
+            || echo "::warning::invoke CLI devolvió error (esperable si UUID no existe)"
 
       - name: Asegurar usuario supervisor demo
         env:
@@ -118,7 +123,13 @@ jobs:
         run: |
           set -uo pipefail
           chmod +x scripts/e2e-full-cycle.sh
-          export ANON_KEY SERVICE_KEY SUPABASE_URL SKIP_DRIVE_CHECK=1 SUPABASE_ACCESS_TOKEN
+          export ANON_KEY SERVICE_KEY SUPABASE_URL SUPABASE_ACCESS_TOKEN
+          # Drive estricto salvo que el diagnóstico de carpeta falle (ID inválido o sin compartir)
+          if [ "${{ steps.drive_diag.outputs.drive_ok }}" = "true" ]; then
+            export SKIP_DRIVE_CHECK=0
+          else
+            export SKIP_DRIVE_CHECK=1
+          fi
           E2E_OK=1
 
           for attempt in 1 2 3; do
