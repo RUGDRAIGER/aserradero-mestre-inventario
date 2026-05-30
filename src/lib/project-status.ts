@@ -68,10 +68,17 @@ export const PROJECT_MODULES: ProjectModule[] = [
   {
     id: "dashboard",
     name: "Panel supervisor",
-    description: "Consumo, alertas stock bajo, rankings.",
-    status: "pending",
-    updatedAt: "2026-05-29",
+    description: "KPIs, alertas y ranking en /supervisor/.",
+    status: "done",
+    updatedAt: "2026-05-30",
+  },
+  {
+    id: "bodega",
+    name: "Vista bodega",
+    description: "Entregas, PDF y movimientos en /bodega/.",
+    status: "done",
+    updatedAt: "2026-05-30",
   },
 ];
 
-export const PROJECT_VERSION = "0.5.0";
+export const PROJECT_VERSION = "0.6.0";

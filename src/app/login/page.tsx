@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/inventario/");
+    if (!loading && user) router.replace("/supervisor/");
   }, [user, loading, router]);
 
   async function onSubmit(e: FormEvent) {
@@ -27,7 +27,7 @@ export default function LoginPage() {
       setError(err);
       return;
     }
-    router.replace("/inventario/");
+    router.replace("/supervisor/");
   }
 
   if (loading) {
