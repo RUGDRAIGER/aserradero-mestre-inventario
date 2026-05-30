@@ -63,14 +63,38 @@ Si Drive falla, el PDF igual queda en Supabase → **Storage** → bucket `recei
 
 ---
 
-## Si prefieres pasarme credenciales
+## Configuración automática (2 minutos — tú solo descargas el JSON)
 
-**No pegues el JSON en el chat.**  
-Solo configura los dos secrets en Supabase y escribe: **“Drive configurado”** + el **ID de carpeta** (no es secreto).
+### Paso 1 — Crear clave JSON (en Google Cloud, cuenta Project_Manager)
 
-Si quieres que yo los suba vía CLI, puedes añadir el JSON como secret en **GitHub** (repo privado):
+1. https://console.cloud.google.com/iam-admin/serviceaccounts?project=proyecto-de-prueba-497903&authuser=2
+2. Clic en **aserradero-mestre-pdf** → pestaña **Claves** → **Agregar clave** → **JSON** → Crear.
+3. Se descarga un archivo `.json` en tu PC.
 
-- `GOOGLE_SERVICE_ACCOUNT_JSON`
-- `GOOGLE_DRIVE_FOLDER_ID`
+### Paso 2 — Subir secrets a GitHub (terminal en tu Mac, una sola vez)
 
-y avisarme; montaré un paso en Actions para pasarlos a Supabase (opcional).
+Sustituye rutas y el ID de tu carpeta Drive:
+
+```bash
+cd "/Users/Rugdraiger/Library/CloudStorage/OneDrive-Personal/PROYECTOS DE PROGRAMACION/PROYECTO ASERRADERO MESTRE"
+
+# ID de carpeta: drive.google.com/drive/folders/ESTE_ID
+gh secret set GOOGLE_DRIVE_FOLDER_ID --repo RUGDRAIGER/aserradero-mestre-inventario --body "PEGA_ID_CARPETA_AQUI"
+
+gh secret set GOOGLE_SERVICE_ACCOUNT_JSON --repo RUGDRAIGER/aserradero-mestre-inventario < ~/Downloads/tu-archivo.json
+```
+
+### Paso 3 — Ejecutar workflow (yo lo dejé listo)
+
+GitHub → **Actions** → **Sincronizar secrets Drive a Supabase** → **Run workflow**
+
+Eso copia los secrets a Supabase y redespliega `generate-receipt`.
+
+### Paso 4 — Compartir carpeta Drive
+
+Comparte la carpeta con:  
+`aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com` (rol **Editor**).
+
+---
+
+**No pegues el JSON en el chat.** Usa los comandos `gh secret set` de arriba.
