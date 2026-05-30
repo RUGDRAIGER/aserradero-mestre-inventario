@@ -18,7 +18,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.20.12
 
       - name: Enlazar y desplegar generate-receipt
         env:

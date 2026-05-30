@@ -26,7 +26,8 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # v2.31+ puede dejar funciones ACTIVE pero 404 en gateway tras CI (supabase#35426)
+          version: 2.20.12
 
       - name: Obtener API keys
         id: keys
