@@ -58,8 +58,9 @@ jobs:
         run: |
           supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD"
           supabase db push --include-all
-          DB_URL=$(supabase db url --password "$SUPABASE_DB_PASSWORD")
-          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/APPLY_SUPERVISOR_RLS.sql
+          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
+            -h "db.qshvtyzedbghgsbpzzcn.supabase.co" -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/APPLY_SUPERVISOR_RLS.sql
 
       - name: Desplegar Edge Function generate-receipt
         env:
