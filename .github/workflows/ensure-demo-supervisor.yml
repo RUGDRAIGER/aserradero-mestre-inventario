@@ -1,0 +1,118 @@
+name: Crear usuario supervisor demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ensure-user:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_REF: qshvtyzedbghgsbpzzcn
+      SUPABASE_URL: https://qshvtyzedbghgsbpzzcn.supabase.co
+      DEMO_EMAIL: supervisor@aserradero-mestre.demo
+      DEMO_PASSWORD: MestreSuper2026!
+    steps:
+      - name: Obtener service_role vía Management API
+        id: keys
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo "::error::Falta SUPABASE_ACCESS_TOKEN en GitHub Secrets"
+            exit 1
+          fi
+          RESP=$(curl -sS \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/api-keys?reveal=true")
+          echo "$RESP" | jq -e . >/dev/null
+          SERVICE_KEY=$(echo "$RESP" | jq -r '
+            [.[] | select(.name == "service_role" or .type == "service_role" or .id == "service_role") | .api_key] | first // empty
+          ')
+          if [ -z "$SERVICE_KEY" ] || [ "$SERVICE_KEY" = "null" ]; then
+            SERVICE_KEY=$(echo "$RESP" | jq -r '
+              [.[] | select(.type == "secret") | .api_key] | first // empty
+            ')
+          fi
+          if [ -z "$SERVICE_KEY" ] || [ "$SERVICE_KEY" = "null" ]; then
+            echo "::error::No se encontró service_role en api-keys"
+            echo "$RESP" | jq 'map({name, type, id})'
+            exit 1
+          fi
+          echo "::add-mask::${SERVICE_KEY}"
+          echo "service_key=${SERVICE_KEY}" >> "$GITHUB_OUTPUT"
+
+      - name: Crear o actualizar usuario demo
+        env:
+          SERVICE_KEY: ${{ steps.keys.outputs.service_key }}
+        run: |
+          set -euo pipefail
+          BODY=$(jq -n \
+            --arg email "$DEMO_EMAIL" \
+            --arg password "$DEMO_PASSWORD" \
+            '{email: $email, password: $password, email_confirm: true}')
+          HTTP=$(curl -sS -o /tmp/create.json -w "%{http_code}" \
+            -X POST "${SUPABASE_URL}/auth/v1/admin/users" \
+            -H "Authorization: Bearer ${SERVICE_KEY}" \
+            -H "apikey: ${SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+          if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
+            echo "Usuario creado OK"
+            jq '{id: .id, email: .email}' /tmp/create.json 2>/dev/null || cat /tmp/create.json
+            exit 0
+          fi
+          if [ "$HTTP" != "422" ] && [ "$HTTP" != "400" ]; then
+            echo "::error::createUser HTTP ${HTTP}"
+            cat /tmp/create.json
+            exit 1
+          fi
+          echo "Usuario puede existir; listando y actualizando contraseña…"
+          LIST=$(curl -sS \
+            -X GET "${SUPABASE_URL}/auth/v1/admin/users?per_page=200" \
+            -H "Authorization: Bearer ${SERVICE_KEY}" \
+            -H "apikey: ${SERVICE_KEY}")
+          USER_ID=$(echo "$LIST" | jq -r --arg e "$DEMO_EMAIL" '
+            (.users // .) | map(select(.email == $e)) | .[0].id // empty
+          ')
+          if [ -z "$USER_ID" ]; then
+            echo "::error::No se encontró usuario ${DEMO_EMAIL}"
+            cat /tmp/create.json
+            echo "$LIST" | jq 'map(.email)? // .'
+            exit 1
+          fi
+          UPD=$(curl -sS -o /tmp/update.json -w "%{http_code}" \
+            -X PUT "${SUPABASE_URL}/auth/v1/admin/users/${USER_ID}" \
+            -H "Authorization: Bearer ${SERVICE_KEY}" \
+            -H "apikey: ${SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg p "$DEMO_PASSWORD" '{password: $p, email_confirm: true}')")
+          if [ "$UPD" != "200" ]; then
+            echo "::error::updateUser HTTP ${UPD}"
+            cat /tmp/update.json
+            exit 1
+          fi
+          echo "Contraseña actualizada para ${DEMO_EMAIL} (id ${USER_ID})"
+
+      - name: Probar login con anon key
+        env:
+          ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ANON_KEY:-}" ]; then
+            echo "::error::Falta NEXT_PUBLIC_SUPABASE_ANON_KEY"
+            exit 1
+          fi
+          HTTP=$(curl -sS -o /tmp/login.json -w "%{http_code}" \
+            -X POST "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
+            -H "apikey: ${ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg e "$DEMO_EMAIL" --arg p "$DEMO_PASSWORD" \
+              '{email: $e, password: $p}')")
+          if [ "$HTTP" != "200" ]; then
+            echo "::error::Login falló HTTP ${HTTP}"
+            cat /tmp/login.json
+            exit 1
+          fi
+          echo "Login OK — access_token obtenido"
+          jq '{user_id: .user.id, email: .user.email}' /tmp/login.json
