@@ -213,7 +213,10 @@ Deno.serve(async (req) => {
         );
         syncStatus = "SYNCED";
       } catch (e) {
-        driveError = e instanceof Error ? e.message : String(e);
+        const raw = e instanceof Error ? e.message : String(e);
+        driveError = raw.includes("Drive upload error:")
+          ? raw.replace(/^Drive upload error:\s*/, "").slice(0, 400)
+          : raw.slice(0, 400);
         console.error("Drive sync failed:", driveError);
         syncStatus = "FAILED";
       }

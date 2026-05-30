@@ -22,6 +22,7 @@ type WithdrawalResult = {
   pdf_url: string | null;
   sync_status: string;
   drive_synced: boolean;
+  drive_error: string | null;
 };
 
 export function WithdrawalKiosk() {
@@ -146,6 +147,7 @@ export function WithdrawalKiosk() {
 
     let pdfUrl: string | null = null;
     let syncStatus = "PENDING";
+    let driveError: string | null = null;
 
     const { data: pdfData, error: fnError } = await supabase.functions.invoke(
       "generate-receipt",
@@ -156,6 +158,7 @@ export function WithdrawalKiosk() {
       const pdf = pdfData as {
         pdf_url?: string;
         sync_status?: string;
+        drive_error?: string | null;
         error?: string;
       };
       if (pdf.error) {
@@ -163,6 +166,7 @@ export function WithdrawalKiosk() {
       } else {
         pdfUrl = pdf.pdf_url ?? null;
         syncStatus = pdf.sync_status ?? "PENDING";
+        driveError = pdf.drive_error ?? null;
       }
     } else if (fnError) {
       setError(
@@ -177,6 +181,7 @@ export function WithdrawalKiosk() {
       pdf_url: pdfUrl,
       sync_status: syncStatus,
       drive_synced: syncStatus === "SYNCED",
+      drive_error: driveError,
     });
     setCart([]);
     await load();
@@ -210,7 +215,9 @@ export function WithdrawalKiosk() {
           {result.drive_synced
             ? "Sincronizado en Google Drive"
             : result.sync_status === "FAILED"
-              ? "Error (revisar secrets Drive)"
+              ? result.drive_error
+                ? result.drive_error
+                : "Error: comparte una carpeta con la cuenta de servicio (ver docs/GOOGLE_DRIVE_SETUP.md)"
               : "Solo Supabase Storage (configura Drive en docs/GOOGLE_DRIVE_SETUP.md)"}
         </p>
         <button

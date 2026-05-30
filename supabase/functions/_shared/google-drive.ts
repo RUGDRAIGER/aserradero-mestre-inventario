@@ -76,13 +76,73 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
   return json.access_token as string;
 }
 
+function driveErrorMessage(status: number, body: string, saEmail: string): string {
+  if (status === 404 || body.includes("notFound")) {
+    return (
+      `Carpeta Drive no encontrada o sin acceso. Comparte una carpeta con ${saEmail} como Editor ` +
+      `y actualiza GOOGLE_DRIVE_FOLDER_ID (ID de la URL .../folders/XXXX).`
+    );
+  }
+  if (status === 403 && (body.includes("storageQuota") || body.includes("storage quota"))) {
+    return (
+      `La cuenta de servicio no puede guardar en su Drive propio. Comparte TU carpeta con ${saEmail} (Editor).`
+    );
+  }
+  return `Drive (${status}): ${body.slice(0, 280)}`;
+}
+
+async function folderExists(folderId: string, token: string): Promise<boolean> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,mimeType&supportsAllDrives=true`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) return false;
+  const meta = await res.json();
+  return meta.mimeType === "application/vnd.google-apps.folder";
+}
+
+/** Carpetas compartidas con la cuenta de servicio (cuando el ID del secret es incorrecto). */
+async function findSharedFolder(token: string, preferId?: string): Promise<string | null> {
+  const q = encodeURIComponent(
+    "sharedWithMe and mimeType='application/vnd.google-apps.folder' and trashed=false",
+  );
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=50&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) return null;
+  const files = (await res.json()).files as { id: string; name: string }[];
+  if (!files?.length) return null;
+  if (preferId && files.some((f) => f.id === preferId)) return preferId;
+  const keywords = /aserradero|mestre|comprobante|pdf|inventario/i;
+  const match = files.find((f) => keywords.test(f.name));
+  return (match ?? files[0]).id;
+}
+
+async function resolveParentFolder(
+  folderId: string,
+  token: string,
+  saEmail: string,
+): Promise<string> {
+  const parentId = normalizeFolderId(folderId);
+  if (await folderExists(parentId, token)) return parentId;
+
+  const shared = await findSharedFolder(token, parentId);
+  if (shared) {
+    console.warn(`Drive: usando carpeta compartida ${shared} (ID configurado ${parentId} no accesible)`);
+    return shared;
+  }
+
+  throw new Error(driveErrorMessage(404, "notFound", saEmail));
+}
+
 async function uploadMultipart(
   pdfBytes: Uint8Array,
   fileName: string,
   metadata: Record<string, unknown>,
   token: string,
+  saEmail: string,
 ): Promise<string> {
-
   const boundary = "-------supabasePdfBoundary";
   const bodyParts = [
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
@@ -113,7 +173,10 @@ async function uploadMultipart(
     },
   );
 
-  if (!res.ok) throw new Error(`Drive upload error: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(driveErrorMessage(res.status, body, saEmail));
+  }
   const json = await res.json();
   return json.id as string;
 }
@@ -126,7 +189,7 @@ export async function uploadPdfToDrive(
 ): Promise<string> {
   const sa = JSON.parse(serviceAccountJson) as ServiceAccount;
   const token = await getAccessToken(sa);
-  const parentId = normalizeFolderId(folderId);
+  const parentId = await resolveParentFolder(folderId, token, sa.client_email);
 
   const metadata = {
     name: fileName,
@@ -134,5 +197,5 @@ export async function uploadPdfToDrive(
     mimeType: "application/pdf",
   };
 
-  return await uploadMultipart(pdfBytes, fileName, metadata, token);
+  return await uploadMultipart(pdfBytes, fileName, metadata, token, sa.client_email);
 }

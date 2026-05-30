@@ -66,8 +66,51 @@ def main() -> int:
     token = json.loads(tok_res.read())["access_token"]
     print("Token OAuth OK")
 
-    name = "e2e-drive-test.txt"
-    metadata = json.dumps({"name": name, "parents": [folder_id], "mimeType": "text/plain"})
+    def folder_ok(fid: str, tok: str) -> bool:
+        u = f"https://www.googleapis.com/drive/v3/files/{fid}?fields=id,mimeType&supportsAllDrives=true"
+        try:
+            meta = json.loads(
+                urllib.request.urlopen(
+                    urllib.request.Request(u, headers={"Authorization": f"Bearer {tok}"})
+                ).read()
+            )
+            return meta.get("mimeType") == "application/vnd.google-apps.folder"
+        except urllib.error.HTTPError:
+            return False
+
+    def shared_folders(tok: str) -> list:
+        q = urllib.parse.quote(
+            "sharedWithMe and mimeType='application/vnd.google-apps.folder' and trashed=false"
+        )
+        u = (
+            f"https://www.googleapis.com/drive/v3/files?q={q}"
+            "&fields=files(id,name)&pageSize=20&supportsAllDrives=true"
+        )
+        data = json.loads(
+            urllib.request.urlopen(
+                urllib.request.Request(u, headers={"Authorization": f"Bearer {tok}"})
+            ).read()
+        )
+        return data.get("files", [])
+
+    parent = folder_id
+    if not folder_ok(parent, token):
+        shared = shared_folders(token)
+        if shared:
+            parent = shared[0]["id"]
+            print(
+                f"AVISO: ID del secret no accesible; usando carpeta compartida "
+                f"«{shared[0].get('name')}» ({parent})",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"Ninguna carpeta accesible. Comparte una carpeta con {email} como Editor.",
+                file=sys.stderr,
+            )
+            return 1
+
+    metadata = json.dumps({"name": name, "parents": [parent], "mimeType": "text/plain"})
     boundary = "e2eBoundary"
     content = b"E2E test Aserradero Mestre"
     parts = (

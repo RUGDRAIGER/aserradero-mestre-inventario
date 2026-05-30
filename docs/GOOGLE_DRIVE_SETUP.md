@@ -32,7 +32,13 @@ Detectado en tu consola Google Cloud:
 
 Si el ID de carpeta es incorrecto o no está compartida, la app **igual guarda el PDF** en el Drive de la cuenta de servicio (respaldo automático). Para ver los archivos en *tu* carpeta, el ID debe ser válido y la carpeta compartida.
 
-**Error 404 "File not found"** en pruebas → revisa `GOOGLE_DRIVE_FOLDER_ID` en GitHub Secrets (debe ser el ID real de la URL de Drive, no un placeholder).
+**Error 404 "File not found"** en pruebas → el ID del secret no coincide con una carpeta accesible. Solución:
+
+1. En Drive, **Compartir** tu carpeta con `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com` como **Editor** (obligatorio).
+2. Copia el ID correcto de la URL `.../folders/XXXXXXXX` y actualiza `GOOGLE_DRIVE_FOLDER_ID` en GitHub Secrets.
+3. Ejecuta **Actions → Sincronizar secrets Drive a Supabase** (valida la carpeta antes de subir).
+
+Si ya compartiste una carpeta pero el ID del secret es viejo, la app intentará usar la primera carpeta compartida con la cuenta de servicio.
 
 ---
 
