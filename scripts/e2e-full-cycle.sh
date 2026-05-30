@@ -85,6 +85,8 @@ echo "$PDF" | jq -e '.ok == true' >/dev/null || fail "generate-receipt: $PDF"
 SYNC=$(echo "$PDF" | jq -r '.sync_status')
 PDF_URL=$(echo "$PDF" | jq -r '.pdf_url // empty')
 DRIVE_ID=$(echo "$PDF" | jq -r '.drive_file_id // empty')
+DRIVE_ERR=$(echo "$PDF" | jq -r '.drive_error // empty')
+[ -n "$DRIVE_ERR" ] && echo "::warning::Drive error función: $DRIVE_ERR"
 [ -n "$PDF_URL" ] || fail "Sin pdf_url firmada"
 ok "PDF generado (sync_status=$SYNC)"
 

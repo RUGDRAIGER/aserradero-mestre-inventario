@@ -199,8 +199,9 @@ Deno.serve(async (req) => {
 
     let driveFileId: string | null = null;
     let syncStatus = "PENDING";
-    const saJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
-    const folderId = Deno.env.get("GOOGLE_DRIVE_FOLDER_ID");
+    let driveError: string | null = null;
+    const saJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON")?.trim();
+    const folderId = Deno.env.get("GOOGLE_DRIVE_FOLDER_ID")?.trim();
 
     if (saJson && folderId) {
       try {
@@ -212,9 +213,13 @@ Deno.serve(async (req) => {
         );
         syncStatus = "SYNCED";
       } catch (e) {
-        console.error("Drive sync failed:", e);
+        driveError = e instanceof Error ? e.message : String(e);
+        console.error("Drive sync failed:", driveError);
         syncStatus = "FAILED";
       }
+    } else if (!saJson || !folderId) {
+      driveError = "Faltan secrets GOOGLE_SERVICE_ACCOUNT_JSON o GOOGLE_DRIVE_FOLDER_ID en Supabase";
+      syncStatus = "FAILED";
     }
 
     await supabase
@@ -240,6 +245,7 @@ Deno.serve(async (req) => {
         sha256: hash,
         sync_status: syncStatus,
         drive_file_id: driveFileId,
+        drive_error: driveError,
         pdf_url: signed?.signedUrl ?? null,
       }),
       { headers: { ...cors, "Content-Type": "application/json" } },
