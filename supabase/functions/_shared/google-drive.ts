@@ -47,7 +47,7 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
   const jwt = await signJwt(
     {
       iss: sa.client_email,
-      scope: "https://www.googleapis.com/auth/drive.file",
+      scope: "https://www.googleapis.com/auth/drive",
       aud: "https://oauth2.googleapis.com/token",
       iat: now,
       exp: now + 3600,
@@ -103,7 +103,7 @@ export async function uploadPdfToDrive(
   fullBody.set(endBytes, metaBytes.length + midBytes.length + pdfBytes.length);
 
   const res = await fetch(
-    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id",
     {
       method: "POST",
       headers: {

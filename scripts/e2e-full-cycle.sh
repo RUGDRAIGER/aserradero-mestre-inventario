@@ -98,7 +98,8 @@ ok "receipt_documents: sync=$DB_SYNC path=$(echo "$REC" | jq -r '.[0].storage_pa
 # 7. Google Drive (si hay credenciales)
 if [ -n "$GOOGLE_SERVICE_ACCOUNT_JSON" ] && [ -n "$GOOGLE_DRIVE_FOLDER_ID" ]; then
   if [ "$DB_SYNC" != "SYNCED" ] || [ -z "$DB_DRIVE" ]; then
-    fail "Drive no sincronizado en DB (sync=$DB_SYNC, file_id=$DB_DRIVE). Ejecuta workflow Sincronizar secrets Drive."
+    echo "::warning::Drive sync=$DB_SYNC file_id=$DB_DRIVE (respuesta función: sync=$SYNC drive=$DRIVE_ID)"
+    fail "Drive no sincronizado. Comparte la carpeta Drive con la cuenta de servicio (Editor) y ejecuta Sincronizar secrets Drive."
   fi
   # Verificar archivo en carpeta Drive vía API
   SA_EMAIL=$(echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | jq -r '.client_email')
