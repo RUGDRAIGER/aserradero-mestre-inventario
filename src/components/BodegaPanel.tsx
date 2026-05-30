@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { formatDateTime, formatQty } from "@/lib/format";
+import { relationOne } from "@/lib/relation";
 
 type DeliveryRow = {
   id: string;
@@ -83,18 +84,25 @@ export function BodegaPanel() {
     }
 
     const mapped: DeliveryRow[] = (wData ?? []).map((w) => {
-      const emp = w.employees as {
-        employee_code: string;
-        full_name: string;
-        department: string;
-      } | null;
-      const recRaw = w.receipt_documents as
-        | { correlative: string; storage_path: string; sync_status: string }
-        | { correlative: string; storage_path: string; sync_status: string }[]
-        | null;
-      const rec = Array.isArray(recRaw) ? recRaw[0] : recRaw;
+      const emp = relationOne(
+        w.employees as
+          | { employee_code: string; full_name: string; department: string }
+          | { employee_code: string; full_name: string; department: string }[]
+          | null,
+      );
+      const rec = relationOne(
+        w.receipt_documents as
+          | { correlative: string; storage_path: string; sync_status: string }
+          | { correlative: string; storage_path: string; sync_status: string }[]
+          | null,
+      );
       const lines = (w.withdrawal_request_lines ?? []).map((ln) => {
-        const it = ln.inventory_items as { sku: string; name: string; unit: string } | null;
+        const it = relationOne(
+          ln.inventory_items as
+            | { sku: string; name: string; unit: string }
+            | { sku: string; name: string; unit: string }[]
+            | null,
+        );
         return {
           sku: it?.sku ?? "",
           name: it?.name ?? "",
@@ -138,8 +146,15 @@ export function BodegaPanel() {
 
     setMovements(
       (mData ?? []).map((m) => {
-        const it = m.inventory_items as { sku: string; name: string; unit: string } | null;
-        const emp = m.employees as { full_name: string } | null;
+        const it = relationOne(
+          m.inventory_items as
+            | { sku: string; name: string; unit: string }
+            | { sku: string; name: string; unit: string }[]
+            | null,
+        );
+        const emp = relationOne(
+          m.employees as { full_name: string } | { full_name: string }[] | null,
+        );
         return {
           id: m.id,
           created_at: m.created_at,

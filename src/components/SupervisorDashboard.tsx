@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
+import { relationOne } from "@/lib/relation";
 
 type StockAlert = {
   sku: string;
@@ -97,7 +98,12 @@ export function SupervisorDashboard() {
     const salidas = (movements ?? []).filter((m) => m.movement_type === "SALIDA_ENTREGA");
     const byWorker = new Map<string, WorkerRank>();
     for (const m of salidas) {
-      const emp = m.employees as { full_name: string; employee_code: string } | null;
+      const emp = relationOne(
+        m.employees as
+          | { full_name: string; employee_code: string }
+          | { full_name: string; employee_code: string }[]
+          | null,
+      );
       const key = m.employee_id ?? "unknown";
       const prev = byWorker.get(key) ?? {
         name: emp?.full_name ?? "Sin asignar",
