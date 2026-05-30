@@ -77,19 +77,30 @@ MOV=$(api GET "/rest/v1/inventory_movements?order=created_at.desc&limit=1&select
 echo "$MOV" | jq -e '.[0].movement_type == "SALIDA_ENTREGA"' >/dev/null || fail "Último movimiento no es SALIDA_ENTREGA"
 ok "Movimiento SALIDA_ENTREGA en DB"
 
-# 5. Generar PDF (Edge Function)
+# 5. Generar PDF (Edge Function vía CLI Supabase — más fiable que curl en CI)
 PDF=""
-for i in 1 2 3 4 5; do
+if command -v supabase >/dev/null 2>&1 && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+  for i in 1 2 3 4 5; do
+    PDF=$(supabase functions invoke generate-receipt \
+      --project-ref qshvtyzedbghgsbpzzcn \
+      --no-verify-jwt \
+      --body "$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')" 2>/dev/null || echo '{}')
+    if echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
+      break
+    fi
+    if ! echo "$PDF" | jq -e '.code == "NOT_FOUND"' >/dev/null 2>&1; then
+      break
+    fi
+    echo "generate-receipt (CLI) reintento $i/5..."
+    sleep 5
+  done
+fi
+if ! echo "$PDF" | jq -e '.ok == true' >/dev/null 2>&1; then
   PDF=$(curl -sS -X POST "${SUPABASE_URL}/functions/v1/generate-receipt" \
     -H "apikey: ${ANON_KEY}" -H "Authorization: Bearer ${ANON_KEY}" \
     -H "Content-Type: application/json" \
     -d "$(jq -n --arg id "$REQUEST_ID" '{request_id:$id}')")
-  if ! echo "$PDF" | jq -e '.code == "NOT_FOUND"' >/dev/null 2>&1; then
-    break
-  fi
-  echo "generate-receipt no listo, reintento $i/5..."
-  sleep 5
-done
+fi
 echo "$PDF" | jq -e '.ok == true' >/dev/null || fail "generate-receipt: $PDF"
 SYNC=$(echo "$PDF" | jq -r '.sync_status')
 PDF_URL=$(echo "$PDF" | jq -r '.pdf_url // empty')

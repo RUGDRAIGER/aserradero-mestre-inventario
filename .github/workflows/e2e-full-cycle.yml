@@ -118,7 +118,7 @@ jobs:
         run: |
           set -uo pipefail
           chmod +x scripts/e2e-full-cycle.sh
-          export ANON_KEY SERVICE_KEY SUPABASE_URL SKIP_DRIVE_CHECK=1
+          export ANON_KEY SERVICE_KEY SUPABASE_URL SKIP_DRIVE_CHECK=1 SUPABASE_ACCESS_TOKEN
           E2E_OK=1
 
           for attempt in 1 2 3; do
