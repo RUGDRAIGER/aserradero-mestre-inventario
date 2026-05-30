@@ -24,8 +24,8 @@ Detectado en tu consola Google Cloud:
 ## Paso 2 — Carpeta en Drive y compartir
 
 1. En Google Drive crea o abre la carpeta de pruebas.
-2. Copia el **ID de la carpeta** de la URL:  
-   `https://drive.google.com/drive/folders/XXXXXXXX`
+2. Copia el **ID de la carpeta** de la URL (ejemplo del proyecto):  
+   `https://drive.google.com/drive/folders/1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx` → ID: `1Y5h_-7KuxS6roW9pfRTW9hEZhSt7okpx`
 3. **Compartir** la carpeta con:  
    `aserradero-mestre-pdf@proyecto-de-prueba-497903.iam.gserviceaccount.com`  
    Rol: **Editor**.
