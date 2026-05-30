@@ -23,14 +23,14 @@ No hay usuario por defecto. Debes crearlo **una vez** en Supabase.
 
 ---
 
-## Sugerencia para pruebas
+## Credenciales ficticias oficiales (demo)
 
-| Campo | Valor sugerido |
-|-------|----------------|
+| Campo | Valor |
+|-------|--------|
 | Email | `supervisor@aserradero-mestre.demo` |
-| Contraseña | `Mestre2026!` (o la que prefieras; solo tú la conoces) |
+| Contraseña | `MestreSuper2026!` |
 
-Puedes usar otro correo real si lo prefieres (`project.manager.rug@gmail.com` también sirve).
+Lista completa del proyecto: **docs/CREDENCIALES_DEMO.md**
 
 ---
 

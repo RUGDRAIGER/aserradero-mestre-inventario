@@ -96,10 +96,28 @@ export default function LoginPage() {
             </li>
             <li>Vuelve aquí e ingresa con ese email y contraseña</li>
           </ol>
-          <p className="muted small">
-            Ejemplo: <code>supervisor@aserradero-mestre.demo</code> y una
-            contraseña que elijas (tú la defines en Supabase).
-          </p>
+          <div className="cred-box">
+            <p>
+              <strong>Datos ficticios para crear en Supabase:</strong>
+            </p>
+            <p>
+              Email: <code>supervisor@aserradero-mestre.demo</code>
+            </p>
+            <p>
+              Contraseña: <code>MestreSuper2026!</code>
+            </p>
+            <p className="muted small">
+              Copia exactamente en Add user → Create new user (Auto Confirm ✓).
+              Lista completa en{" "}
+              <a
+                href="https://github.com/RUGDRAIGER/aserradero-mestre-inventario/blob/main/docs/CREDENCIALES_DEMO.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                CREDENCIALES_DEMO.md
+              </a>
+            </p>
+          </div>
           <p>
             <Link href="/inventario/">Inventario</Link> (solo lectura) ·{" "}
             <Link href="/retiro/">Kiosk retiro</Link> (sin login)
