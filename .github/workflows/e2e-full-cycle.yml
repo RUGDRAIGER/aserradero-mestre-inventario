@@ -48,6 +48,14 @@ jobs:
           echo "anon=${ANON}" >> "$GITHUB_OUTPUT"
           echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
 
+      - name: Aplicar migraciones pendientes (RLS supervisor)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref qshvtyzedbghgsbpzzcn --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --include-all
+
       - name: Asegurar usuario supervisor demo
         env:
           SERVICE_KEY: ${{ steps.keys.outputs.service }}

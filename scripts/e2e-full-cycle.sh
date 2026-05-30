@@ -182,7 +182,7 @@ fi
 
 # 8. Panel supervisor (RLS autenticado)
 AUTH_W=$(api GET "/rest/v1/withdrawal_requests?id=eq.${REQUEST_ID}&select=id,status" "$ACCESS")
-echo "$AUTH_W" | jq -e '.[0].id' >/dev/null || fail "Supervisor no puede leer withdrawal_requests (RLS)"
+echo "$AUTH_W" | jq -e '.[0].id' >/dev/null || fail "Supervisor no puede leer withdrawal_requests (ejecuta supabase db push --include-all o APPLY_SUPERVISOR_RLS.sql)"
 ok "RLS supervisor: lectura withdrawal_requests"
 
 echo "=== E2E COMPLETO OK ==="

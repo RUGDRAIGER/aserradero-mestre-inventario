@@ -7,6 +7,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/APPLY_IN_DASHBOARD.sql"
       - "supabase/APPLY_KIOSK.sql"
+      - "supabase/APPLY_SUPERVISOR_RLS.sql"
   workflow_dispatch:
 
 jobs:
@@ -35,4 +36,4 @@ jobs:
             exit 1
           fi
           supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-          supabase db push
+          supabase db push --include-all
